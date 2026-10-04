@@ -43,6 +43,22 @@ class BillingController extends Controller
     }
 
     /**
+     * Fallback sinkronisasi: invoice pending yang sudah lewat deadline
+     * langsung di-expire + payload dibersihkan saat list dibaca, supaya
+     * history tidak nyangkut "pending" bila scheduler belum jalan.
+     */
+    private function syncExpiry(BillingInvoice $invoice): BillingInvoice
+    {
+        if ($invoice->isExpiredByTime()) {
+            $invoice->update(['status' => BillingInvoice::STATUS_EXPIRED]);
+            $invoice->clearPaymentPayload();
+            $invoice->refresh();
+        }
+
+        return $invoice;
+    }
+
+    /**
      * Invoice milik user login.
      */
     public function invoices(Request $request): JsonResponse
@@ -52,6 +68,8 @@ class BillingController extends Controller
             ->with('subscription:id,plan_id,server_id')
             ->latest()
             ->get();
+
+        $invoices->transform(fn (BillingInvoice $invoice) => $this->syncExpiry($invoice));
 
         return response()->json($invoices);
     }
