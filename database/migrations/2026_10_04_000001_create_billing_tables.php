@@ -8,16 +8,20 @@ class CreateBillingTables extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * Tabel Pterodactyl lama (users, servers, eggs, nodes) memakai
+     * increments('id') = INT UNSIGNED, jadi FK billing harus unsignedInteger()
+     * agar tipe cocok (bigInt -> errno 150 di MySQL).
      */
     public function up(): void
     {
         Schema::create('billing_plans', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             $table->string('name');
             $table->text('description')->nullable();
-            $table->foreignId('egg_id')->constrained('eggs')->cascadeOnDelete();
+            $table->unsignedInteger('egg_id');
             // A null node_id means the server is auto-deployed to any viable node.
-            $table->foreignId('node_id')->nullable()->constrained('nodes')->nullOnDelete();
+            $table->unsignedInteger('node_id')->nullable();
             $table->integer('memory')->unsigned();
             $table->integer('swap')->unsigned()->default(0);
             $table->integer('disk')->unsigned();
@@ -35,23 +39,30 @@ class CreateBillingTables extends Migration
             $table->integer('duration_days')->unsigned();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+
+            $table->foreign('egg_id')->references('id')->on('eggs')->cascadeOnDelete();
+            $table->foreign('node_id')->references('id')->on('nodes')->nullOnDelete();
         });
 
         Schema::create('billing_subscriptions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('plan_id')->constrained('billing_plans')->nullOnDelete();
-            $table->foreignId('server_id')->nullable()->constrained('servers')->nullOnDelete();
+            $table->increments('id');
+            $table->unsignedInteger('user_id');
+            $table->unsignedInteger('plan_id')->nullable();
+            $table->unsignedInteger('server_id')->nullable();
             $table->string('status', 20)->default('pending_payment')->index();
             $table->timestamp('expires_at')->nullable();
             $table->timestamp('suspended_at')->nullable();
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('plan_id')->references('id')->on('billing_plans')->nullOnDelete();
+            $table->foreign('server_id')->references('id')->on('servers')->nullOnDelete();
         });
 
         Schema::create('billing_invoices', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('subscription_id')->constrained('billing_subscriptions')->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->increments('id');
+            $table->unsignedInteger('subscription_id');
+            $table->unsignedInteger('user_id');
             $table->string('order_id')->unique();
             $table->string('inv_id')->nullable();
             $table->integer('amount_cents')->unsigned();
@@ -62,6 +73,9 @@ class CreateBillingTables extends Migration
             $table->timestamp('paid_at')->nullable();
             $table->string('type', 12)->default('initial');
             $table->timestamps();
+
+            $table->foreign('subscription_id')->references('id')->on('billing_subscriptions')->cascadeOnDelete();
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
         });
     }
 
