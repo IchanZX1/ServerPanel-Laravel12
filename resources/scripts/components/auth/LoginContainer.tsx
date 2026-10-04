@@ -99,13 +99,24 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
                             }}
                         />
                     )}
-                    <div css={tw`mt-6 text-center`}>
+                    <div css={tw`mt-6 flex flex-col gap-2 text-center`}>
                         <Link
                             to={'/auth/password'}
-                            css={tw`text-xs text-neutral-500 tracking-wide no-underline uppercase hover:text-neutral-600`}
+                            style={{ color: 'var(--z0ne-text-secondary, #a1a1aa)' }}
+                            css={tw`text-xs tracking-wide no-underline hover:text-white transition-colors`}
                         >
                             Forgot password?
                         </Link>
+                        <div style={{ color: 'var(--z0ne-text-muted, #71717a)' }} css={tw`text-xs mt-2 pt-2 border-t border-neutral-800`}>
+                            Don&apos;t have an account?{' '}
+                            <Link
+                                to={'/auth/login'}
+                                style={{ color: 'var(--z0ne-accent-primary, #3b82f6)' }}
+                                css={tw`font-medium no-underline hover:underline ml-1`}
+                            >
+                                Create Account
+                            </Link>
+                        </div>
                     </div>
                 </LoginFormContainer>
             )}

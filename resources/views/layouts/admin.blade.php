@@ -14,7 +14,7 @@
         <link rel="mask-icon" href="/favicons/safari-pinned-tab.svg" color="#bc6e3c">
         <link rel="shortcut icon" href="/favicons/favicon.ico">
         <meta name="msapplication-config" content="/favicons/browserconfig.xml">
-        <meta name="theme-color" content="#0e4688">
+        <meta name="theme-color" content="#09090b">
 
         @include('layouts.scripts')
 
@@ -109,6 +109,11 @@
                         <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.users') ?: 'active' }}">
                             <a href="{{ route('admin.users') }}">
                                 <i class="fa fa-users"></i> <span>Users</span>
+                            </a>
+                        </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.billing') ?: 'active' }}">
+                            <a href="{{ route('admin.billing.plans') }}">
+                                <i class="fa fa-shopping-cart"></i> <span>Billing</span>
                             </a>
                         </li>
                         <li class="header">SERVICE MANAGEMENT</li>

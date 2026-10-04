@@ -1,0 +1,59 @@
+<?php
+
+namespace Pterodactyl\Models\Billing;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Pterodactyl\Models\Server;
+use Pterodactyl\Models\User;
+
+class BillingSubscription extends Model
+{
+    public const STATUS_PENDING_PAYMENT = 'pending_payment';
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_SUSPENDED = 'suspended';
+    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_EXPIRED = 'expired';
+
+    protected $table = 'billing_subscriptions';
+
+    protected $fillable = [
+        'user_id',
+        'plan_id',
+        'server_id',
+        'status',
+        'expires_at',
+        'suspended_at',
+    ];
+
+    protected $casts = [
+        'expires_at' => 'datetime',
+        'suspended_at' => 'datetime',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(BillingPlan::class, 'plan_id');
+    }
+
+    public function server(): BelongsTo
+    {
+        return $this->belongsTo(Server::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(BillingInvoice::class, 'subscription_id');
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
+}

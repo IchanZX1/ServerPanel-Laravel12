@@ -35,6 +35,11 @@ class Kernel extends ConsoleKernel
         $schedule->command(ProcessRunnableCommand::class)->everyMinute()->withoutOverlapping();
         $schedule->command(CleanServiceBackupFilesCommand::class)->daily();
 
+        // Billing lifecycle.
+        $schedule->command(\Pterodactyl\Console\Commands\Billing\VerifyPendingInvoicesCommand::class)->everyMinute()->withoutOverlapping();
+        $schedule->command(\Pterodactyl\Console\Commands\Billing\SuspendExpiredSubscriptionsCommand::class)->hourly()->withoutOverlapping();
+        $schedule->command(\Pterodactyl\Console\Commands\Billing\GenerateRenewalInvoicesCommand::class)->daily()->withoutOverlapping();
+
         if (config('backups.prune_age')) {
             // Every 30 minutes, run the backup pruning command so that any abandoned backups can be deleted.
             $schedule->command(PruneOrphanedBackupsCommand::class)->everyThirtyMinutes();

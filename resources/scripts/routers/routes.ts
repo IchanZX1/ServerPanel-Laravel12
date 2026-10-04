@@ -12,6 +12,7 @@ import AccountOverviewContainer from '@/components/dashboard/AccountOverviewCont
 import AccountApiContainer from '@/components/dashboard/AccountApiContainer';
 import AccountSSHContainer from '@/components/dashboard/ssh/AccountSSHContainer';
 import ActivityLogContainer from '@/components/dashboard/activity/ActivityLogContainer';
+import BillingContainer from '@/components/dashboard/billing/BillingContainer';
 import ServerActivityLogContainer from '@/components/server/ServerActivityLogContainer';
 
 // Each of the router files is already code split out appropriately — so
@@ -64,6 +65,11 @@ export default {
             path: '/activity',
             name: 'Activity',
             component: ActivityLogContainer,
+        },
+        {
+            path: '/billing',
+            name: 'Billing',
+            component: BillingContainer,
         },
     ],
     server: [

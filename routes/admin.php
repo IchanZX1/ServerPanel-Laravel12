@@ -200,6 +200,25 @@ Route::group(['prefix' => 'mounts'], function () {
 | Endpoint: /admin/nests
 |
 */
+
+/*
+|--------------------------------------------------------------------------
+| Billing Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/billing
+|
+*/
+Route::group(['prefix' => 'billing'], function () {
+    Route::get('/plans', [Admin\BillingController::class, 'plansIndex'])->name('admin.billing.plans');
+    Route::post('/plans', [Admin\BillingController::class, 'plansCreate']);
+    Route::patch('/plans/{plan:id}', [Admin\BillingController::class, 'plansUpdate']);
+
+    Route::get('/subscriptions', [Admin\BillingController::class, 'subscriptionsIndex'])->name('admin.billing.subscriptions');
+    Route::get('/invoices', [Admin\BillingController::class, 'invoicesIndex'])->name('admin.billing.invoices');
+    Route::post('/subscriptions/{subscription:id}/retry-provision', [Admin\BillingController::class, 'retryProvision'])->name('admin.billing.subscriptions.retry');
+});
+
 Route::group(['prefix' => 'nests'], function () {
     Route::get('/', [Admin\Nests\NestController::class, 'index'])->name('admin.nests');
     Route::get('/new', [Admin\Nests\NestController::class, 'create'])->name('admin.nests.new');

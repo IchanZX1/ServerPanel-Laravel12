@@ -8,6 +8,7 @@ import SubNavigation from '@/components/elements/SubNavigation';
 import { useLocation } from 'react-router';
 import Spinner from '@/components/elements/Spinner';
 import routes from '@/routers/routes';
+import StoreContainer from '@/components/dashboard/store/StoreContainer';
 
 export default () => {
     const location = useLocation();
@@ -33,6 +34,9 @@ export default () => {
                     <Switch location={location}>
                         <Route path={'/'} exact>
                             <DashboardContainer />
+                        </Route>
+                        <Route path={'/store'} exact>
+                            <StoreContainer />
                         </Route>
                         {routes.account.map(({ path, component: Component }) => (
                             <Route key={path} path={`/account/${path}`.replace('//', '/')} exact>

@@ -13,7 +13,13 @@ export default () => {
     const { path } = useRouteMatch();
 
     return (
-        <div className={'pt-8 xl:pt-32'}>
+        <div
+            style={{
+                background: 'radial-gradient(circle at top right, #1a1a2e 0%, #09090b 100%)',
+                minHeight: '100vh',
+            }}
+            className={'pt-8 xl:pt-32'}
+        >
             <Switch location={location}>
                 <Route path={`${path}/login`} component={LoginContainer} exact />
                 <Route path={`${path}/login/checkpoint`} component={LoginCheckpointContainer} />

@@ -14,7 +14,8 @@ export default createGlobalStyle`
     }
 
     body {
-        ${tw`font-sans bg-neutral-800 text-neutral-200`};
+        background-color: var(--z0ne-surface-base, #09090b) !important;
+        color: var(--z0ne-text-primary, #fafafa);
         letter-spacing: 0.015em;
     }
 
