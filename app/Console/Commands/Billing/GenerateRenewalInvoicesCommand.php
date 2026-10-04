@@ -54,7 +54,7 @@ class GenerateRenewalInvoicesCommand extends Command
                 'amount_cents' => $plan->price_cents,
                 'redirect_url' => $payment['redirect_url'],
                 'qr_string' => $payment['qr_string'] ?? null,
-                'gateway_expires_at' => isset($payment['expiration_date']) ? \Illuminate\Support\Carbon::parse($payment['expiration_date']) : null,
+                'gateway_expires_at' => SociabuzzGatewayService::parseExpiry($payment['expiration_date'] ?? null),
                 'status' => BillingInvoice::STATUS_PENDING,
                 'type' => BillingInvoice::TYPE_RENEWAL,
             ]);

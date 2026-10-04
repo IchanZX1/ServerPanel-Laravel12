@@ -4,7 +4,6 @@ namespace Pterodactyl\Http\Controllers\Billing;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Jobs\Billing\VerifyInvoicePaymentJob;
@@ -97,7 +96,7 @@ class BillingController extends Controller
                 'amount_cents' => $plan->price_cents,
                 'redirect_url' => $payment['redirect_url'],
                 'qr_string' => $payment['qr_string'] ?? null,
-                'gateway_expires_at' => isset($payment['expiration_date']) ? Carbon::parse($payment['expiration_date']) : null,
+                'gateway_expires_at' => SociabuzzGatewayService::parseExpiry($payment['expiration_date'] ?? null),
                 'status' => BillingInvoice::STATUS_PENDING,
                 'type' => BillingInvoice::TYPE_INITIAL,
             ]);
@@ -179,7 +178,7 @@ class BillingController extends Controller
             'amount_cents' => $plan->price_cents,
             'redirect_url' => $payment['redirect_url'],
             'qr_string' => $payment['qr_string'] ?? null,
-            'gateway_expires_at' => isset($payment['expiration_date']) ? Carbon::parse($payment['expiration_date']) : null,
+            'gateway_expires_at' => SociabuzzGatewayService::parseExpiry($payment['expiration_date'] ?? null),
             'status' => BillingInvoice::STATUS_PENDING,
             'type' => BillingInvoice::TYPE_RENEWAL,
         ]);

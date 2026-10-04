@@ -138,6 +138,45 @@ class SociabuzzGatewayService
     }
 
     /**
+     * Parse tanggal expiry dari gateway secara defensif.
+     *
+     * Format gateway tidak dijamin ISO-8601 (bisa "2026-10-04 01:30:00",
+     * unix ms, atau string kosong). Carbon::parse() melempar
+     * InvalidFormatException (subclass UnexpectedValueException) yang
+     * bocor jadi 500. Di sini gagal parse -> null, dan job verifikasi
+     * tetap jalan lewat fallback cek status gateway.
+     *
+     * @param  mixed  $value
+     */
+    public static function parseExpiry($value): ?\Illuminate\Support\Carbon
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        // Unix timestamp detik / milidetik.
+        if (is_numeric($value)) {
+            $seconds = (int) $value;
+            if ($seconds > 100000000000) {
+                $seconds = (int) floor($seconds / 1000);
+            }
+
+            return \Illuminate\Support\Carbon::createFromTimestamp($seconds);
+        }
+
+        try {
+            return \Illuminate\Support\Carbon::parse((string) $value);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Billing: gagal parse expiration_date gateway', [
+                'value' => $value,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
      * Opsi SSL untuk request gateway.
      *
      * Di Windows, antivirus (Avast Web Shield) meng-intercept TLS dan
