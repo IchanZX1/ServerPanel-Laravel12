@@ -135,7 +135,7 @@ export default () => {
                                     <span css={[tw`text-sm font-medium`, statusColor[i.status] ?? tw``]}>{i.status}</span>
                                     {i.status === 'pending' && (
                                         <div css={tw`mt-1 space-x-2`}>
-                                            <a href={i.redirect_url} target="_blank" rel="noreferrer" css={tw`text-cyan-400 text-sm no-underline`}>Bayar</a>
+                                            <a href={`/store/invoice/${i.id}`} css={tw`text-cyan-400 text-sm no-underline`}>Bayar</a>
                                             <Button onClick={() => onCheck(i)}>Cek status</Button>
                                         </div>
                                     )}

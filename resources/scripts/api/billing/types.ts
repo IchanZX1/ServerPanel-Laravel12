@@ -56,3 +56,13 @@ export interface CheckoutResponse {
     redirect_url: string;
     qr_string: string | null;
 }
+
+export interface InvoiceDetailResponse {
+    invoice: BillingInvoice;
+    subscription: BillingSubscription | null;
+    redirect_url: string | null;
+    qr_string: string | null;
+    /** ISO-8601 deadline pembayaran; null bila invoice tidak bisa dibayar lagi. */
+    expires_at: string | null;
+    can_pay: boolean;
+}

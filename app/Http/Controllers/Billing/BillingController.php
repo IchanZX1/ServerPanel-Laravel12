@@ -120,6 +120,38 @@ class BillingController extends Controller
     }
 
     /**
+     * Detail satu invoice milik user (halaman /store/invoice/{id}).
+     *
+     * Payload pembayaran (qr_string + redirect_url) hanya dikirim selama
+     * invoice masih pending dan belum lewat deadline.
+     */
+    public function show(Request $request, BillingInvoice $invoice): JsonResponse
+    {
+        if ($invoice->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        $expired = $invoice->isExpiredByTime();
+        if ($expired) {
+            // Sinkronkan status begitu deadline lewat, sekaligus bersihkan payload.
+            $invoice->update(['status' => BillingInvoice::STATUS_EXPIRED]);
+            $invoice->clearPaymentPayload();
+            $invoice->refresh();
+        }
+
+        $canPay = $invoice->isPending() && !$expired;
+
+        return response()->json([
+            'invoice' => $invoice,
+            'subscription' => $invoice->subscription()->with(['plan', 'server'])->first(),
+            'redirect_url' => $canPay ? $invoice->redirect_url : null,
+            'qr_string' => $canPay ? $invoice->qr_string : null,
+            'expires_at' => $canPay ? $invoice->paymentDeadline()->toIso8601String() : null,
+            'can_pay' => $canPay,
+        ]);
+    }
+
+    /**
      * Trigger verifikasi manual ("Saya sudah bayar").
      */
     public function checkInvoice(Request $request, BillingInvoice $invoice): JsonResponse

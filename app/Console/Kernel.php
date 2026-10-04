@@ -37,6 +37,7 @@ class Kernel extends ConsoleKernel
 
         // Billing lifecycle.
         $schedule->command(\Pterodactyl\Console\Commands\Billing\VerifyPendingInvoicesCommand::class)->everyMinute()->withoutOverlapping();
+        $schedule->command(\Pterodactyl\Console\Commands\Billing\ExpireInvoicesCommand::class)->everyMinute()->withoutOverlapping();
         $schedule->command(\Pterodactyl\Console\Commands\Billing\SuspendExpiredSubscriptionsCommand::class)->hourly()->withoutOverlapping();
         $schedule->command(\Pterodactyl\Console\Commands\Billing\GenerateRenewalInvoicesCommand::class)->daily()->withoutOverlapping();
 

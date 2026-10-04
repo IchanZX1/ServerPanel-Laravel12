@@ -9,6 +9,7 @@ import { useLocation } from 'react-router';
 import Spinner from '@/components/elements/Spinner';
 import routes from '@/routers/routes';
 import StoreContainer from '@/components/dashboard/store/StoreContainer';
+import InvoiceContainer from '@/components/dashboard/store/InvoiceContainer';
 
 export default () => {
     const location = useLocation();
@@ -37,6 +38,9 @@ export default () => {
                         </Route>
                         <Route path={'/store'} exact>
                             <StoreContainer />
+                        </Route>
+                        <Route path={'/store/invoice/:invoiceId'} exact>
+                            <InvoiceContainer />
                         </Route>
                         {routes.account.map(({ path, component: Component }) => (
                             <Route key={path} path={`/account/${path}`.replace('//', '/')} exact>

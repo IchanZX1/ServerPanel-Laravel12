@@ -53,4 +53,38 @@ class BillingInvoice extends Model
     {
         return $this->status === self::STATUS_PENDING;
     }
+
+    /**
+     * Batas waktu invoice masih boleh dibayar.
+     *
+     * Prioritas: gateway_expires_at (dari API), fallback created_at +
+     * invoice_lifetime_minutes. Dipakai halaman invoice untuk countdown dan
+     * scheduler untuk membersihkan payload.
+     */
+    public function paymentDeadline(): \Illuminate\Support\Carbon
+    {
+        if (!is_null($this->gateway_expires_at)) {
+            return $this->gateway_expires_at;
+        }
+
+        return $this->created_at->copy()->addMinutes((int) config('billing.invoice_lifetime_minutes', 3));
+    }
+
+    public function isExpiredByTime(): bool
+    {
+        return $this->isPending() && $this->paymentDeadline()->isPast();
+    }
+
+    /**
+     * Bersihkan payload pembayaran (QR + redirect_url) setelah invoice
+     * tidak lagi bisa dibayar. Ledger tetap utuh untuk audit.
+     */
+    public function clearPaymentPayload(): void
+    {
+        $this->forceFill([
+            'qr_string' => null,
+            'redirect_url' => null,
+            'updated_at' => now(),
+        ])->save();
+    }
 }
