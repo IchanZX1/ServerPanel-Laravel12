@@ -69,7 +69,11 @@ class VerifyInvoicePaymentJob implements ShouldQueue
 
         if ($status === SociabuzzGatewayService::STATUS_PAID) {
             $this->invoice->update(['status' => BillingInvoice::STATUS_PAID, 'paid_at' => now()]);
-            MarkInvoicePaidJob::dispatch($this->invoice)->onQueue('billing');
+
+            // dispatchSync, bukan dispatch()->onQueue(). Tanpa worker antrean,
+            // dispatch biasa hanya menumpuk di tabel jobs dan server tidak
+            // pernah terbuat sampai ada yang menjalankan worker / retry manual.
+            MarkInvoicePaidJob::dispatchSync($this->invoice);
 
             return;
         }
