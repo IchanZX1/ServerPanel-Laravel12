@@ -54,15 +54,20 @@ class BillingSubscription extends Model
         return $this->hasMany(BillingInvoice::class, 'subscription_id');
     }
 
-    /** Invoice pending terbaru (dipakai badge/header, bukan load semua). */
+    /**
+     * Invoice pending terbaru (dipakai badge/header, bukan load semua).
+     *
+     * Sengaja TIDAK memakai `ofMany()`/`latestOfMany()`: keduanya membangun
+     * subquery agregat `MAX(id) ... GROUP BY`, yang di MySQL dengan
+     * `only_full_group_by` mudah ditolak saat eager load membawa daftar kolom.
+     * `hasOne` + `orderByDesc` memakai `WHERE IN (...)` biasa, dan Laravel
+     * menyimpan hasil pertama per subscription — hasilnya sama tanpa agregat.
+     */
     public function pendingInvoice(): HasOne
     {
-        // `ofMany` sudah menentukan baris terpilih via MAX(id); jangan tambah
-        // `latest()` karena ORDER BY pada subquery agregat memicu error hanya-baca
-        // (only_full_group_by) di MySQL.
         return $this->hasOne(BillingInvoice::class, 'subscription_id')
             ->where('status', BillingInvoice::STATUS_PENDING)
-            ->ofMany('id', 'max');
+            ->orderByDesc('id');
     }
 
     public function isActive(): bool
