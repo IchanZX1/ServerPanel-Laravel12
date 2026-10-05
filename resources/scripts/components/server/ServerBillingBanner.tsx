@@ -39,9 +39,9 @@ export default () => {
         let cancelled = false;
         const fetchSub = () => {
             getBillingSubscriptions()
-                .then((subs) => {
+                .then((page) => {
                     if (cancelled) return;
-                    setSubscription(subs.find((s) => s.server?.id === internalId) ?? null);
+                    setSubscription(page.items.find((s) => s.server?.id === internalId) ?? null);
                 })
                 .catch(() => {
                     // Banner pelengkap: gagal fetch = sembunyikan, jangan ganggu halaman server.
@@ -68,7 +68,10 @@ export default () => {
 
     if (!subscription) return null;
 
-    const pendingInvoice = (subscription.invoices || []).find((i) => i.status === 'pending');
+    const pendingInvoice =
+        subscription.pending_invoice && subscription.pending_invoice.status === 'pending'
+            ? subscription.pending_invoice
+            : null;
     const expiresMs = subscription.expires_at ? new Date(subscription.expires_at).getTime() : null;
     const expired = expiresMs !== null && expiresMs - nowMs <= 0;
 

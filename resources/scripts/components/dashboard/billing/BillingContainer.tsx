@@ -13,6 +13,8 @@ import getBillingInvoices from '@/api/billing/getBillingInvoices';
 import checkInvoice from '@/api/billing/checkInvoice';
 import renewSubscription from '@/api/billing/renewSubscription';
 import { BillingInvoice, BillingSubscription } from '@/api/billing/types';
+import PaginationFooter from '@/components/elements/table/PaginationFooter';
+import { PaginationDataSet } from '@/api/http';
 
 const statusColor: Record<string, TwStyle> = {
     active: tw`text-green-400`,
@@ -54,20 +56,26 @@ export default () => {
     const { addFlash } = useFlash();
     const [subscriptions, setSubscriptions] = useState<BillingSubscription[]>([]);
     const [invoices, setInvoices] = useState<BillingInvoice[]>([]);
+    const [subPage, setSubPage] = useState(1);
+    const [invoicePage, setInvoicePage] = useState(1);
+    const [subPagination, setSubPagination] = useState<PaginationDataSet | null>(null);
+    const [invoicePagination, setInvoicePagination] = useState<PaginationDataSet | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const refresh = () => {
+    const refresh = (nextSubPage = subPage, nextInvoicePage = invoicePage) => {
         setLoading(true);
-        Promise.all([getBillingSubscriptions(), getBillingInvoices()])
+        Promise.all([getBillingSubscriptions(nextSubPage), getBillingInvoices(nextInvoicePage)])
             .then(([subs, invs]) => {
-                setSubscriptions(subs);
-                setInvoices(invs);
+                setSubscriptions(subs.items);
+                setSubPagination(subs.pagination);
+                setInvoices(invs.items);
+                setInvoicePagination(invs.pagination);
             })
             .catch(clearAndAddHttpError)
             .then(() => setLoading(false));
     };
 
-    useEffect(refresh, []);
+    useEffect(() => refresh(subPage, invoicePage), [subPage, invoicePage]);
 
     const onCheck = async (invoice: BillingInvoice) => {
         setLoading(true);
@@ -84,7 +92,7 @@ export default () => {
         } catch (e: any) {
             clearAndAddHttpError(e);
         }
-        refresh();
+        refresh(subPage, invoicePage);
     };
 
     const onRenew = async (subscription: BillingSubscription) => {
@@ -101,12 +109,11 @@ export default () => {
         } catch (e: any) {
             clearAndAddHttpError(e);
         }
-        refresh();
+        refresh(subPage, invoicePage);
     };
 
     const canRenew = (s: BillingSubscription) =>
-        (s.status === 'active' || s.status === 'suspended') &&
-        !(s.invoices || []).some((i) => i.status === 'pending' && i.type === 'renewal');
+        (s.status === 'active' || s.status === 'suspended') && !s.pending_invoice;
 
     return (
         <PageContentBlock title={'Billing'}>
@@ -158,6 +165,7 @@ export default () => {
                             </div>
                         </div>
                     ))}
+                    {subPagination && <PaginationFooter pagination={subPagination} onPageSelect={setSubPage} />}
                 </ContentBox>
 
                 <ContentBox title={'Invoices'} css={tw`rounded-md shadow-ds-1`}>
@@ -200,6 +208,9 @@ export default () => {
                             </div>
                         </div>
                     ))}
+                    {invoicePagination && (
+                        <PaginationFooter pagination={invoicePagination} onPageSelect={setInvoicePage} />
+                    )}
                 </ContentBox>
             </div>
         </PageContentBlock>

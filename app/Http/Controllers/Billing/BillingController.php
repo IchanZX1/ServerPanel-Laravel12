@@ -31,16 +31,36 @@ class BillingController extends Controller
 
     /**
      * Subscription milik user login.
+     *
+     * Dipaginasi: endpoint ini dipanggil banner /server/:id juga, dan tanpa
+     * batas jumlah baris akan ikut membengkak seiring riwayat pembelian.
+     * Relasi `invoices` tidak ikut di-load — pakai `pending_invoice` supaya
+     * satu baris subscription tidak menarik seluruh invoice-nya.
      */
     public function subscriptions(Request $request): JsonResponse
     {
         $subscriptions = BillingSubscription::query()
             ->where('user_id', $request->user()->id)
-            ->with(['plan:id,name,price_cents,duration_days', 'server:id,name,status', 'invoices'])
+            ->with([
+                'plan:id,name,price_cents,duration_days',
+                'server:id,name,status',
+                'pendingInvoice:id,subscription_id,status,type',
+            ])
             ->latest()
-            ->get();
+            ->paginate($this->perPage($request));
 
         return response()->json($subscriptions);
+    }
+
+    /**
+     * Batas baris per halaman. Dikunci 50 agar query tidak bisa diminta
+     * tanpa batas lewat `?per_page=`.
+     */
+    private function perPage(Request $request, int $default = 25, int $max = 50): int
+    {
+        $perPage = (int) $request->query('per_page', $default);
+
+        return max(1, min($perPage, $max));
     }
 
     /**
@@ -61,6 +81,10 @@ class BillingController extends Controller
 
     /**
      * Invoice milik user login.
+     *
+     * Dipaginasi supaya riwayat panjang tidak menarik seluruh baris sekaligus.
+     * `syncExpiry` hanya dijalankan pada baris di halaman ini — invoice lain
+     * tetap ditangani scheduler `billing:expire-invoices`.
      */
     public function invoices(Request $request): JsonResponse
     {
@@ -68,9 +92,9 @@ class BillingController extends Controller
             ->where('user_id', $request->user()->id)
             ->with('subscription:id,plan_id,server_id')
             ->latest()
-            ->get();
+            ->paginate($this->perPage($request));
 
-        $invoices->transform(fn (BillingInvoice $invoice) => $this->syncExpiry($invoice));
+        $invoices->getCollection()->transform(fn (BillingInvoice $invoice) => $this->syncExpiry($invoice));
 
         return response()->json($invoices);
     }

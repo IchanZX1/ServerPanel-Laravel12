@@ -33,6 +33,8 @@ export interface BillingSubscription {
     suspended_at: string | null;
     plan?: BillingPlan;
     server?: { id: number; name: string; status: string | null };
+    /** Invoice pending terbaru saja (bukan seluruh riwayat). */
+    pending_invoice?: BillingInvoice | null;
     invoices?: BillingInvoice[];
 }
 

@@ -5,6 +5,7 @@ namespace Pterodactyl\Models\Billing;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Pterodactyl\Models\Server;
 use Pterodactyl\Models\User;
 
@@ -51,6 +52,15 @@ class BillingSubscription extends Model
     public function invoices(): HasMany
     {
         return $this->hasMany(BillingInvoice::class, 'subscription_id');
+    }
+
+    /** Invoice pending terbaru (dipakai badge/header, bukan load semua). */
+    public function pendingInvoice(): HasOne
+    {
+        return $this->hasOne(BillingInvoice::class, 'subscription_id')
+            ->where('status', BillingInvoice::STATUS_PENDING)
+            ->latest('id')
+            ->ofMany('id', 'max');
     }
 
     public function isActive(): bool
