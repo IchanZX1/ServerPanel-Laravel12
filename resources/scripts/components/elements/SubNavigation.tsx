@@ -37,7 +37,7 @@ const SubNavigation = styled.div<{ $vertical?: boolean }>`
 
             &:active,
             &.active {
-                ${(props) => (props.$vertical ? tw`text-neutral-100 bg-neutral-950` : tw`text-neutral-100`)};
+                ${(props) => (props.$vertical ? tw`text-neutral-100 bg-neutral-900` : tw`text-neutral-100`)};
 
                 box-shadow: inset ${(props) => (props.$vertical ? '3px 0' : '0 -2px')}
                     ${theme`colors.cyan.500`.toString()};

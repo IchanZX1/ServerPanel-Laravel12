@@ -17,8 +17,10 @@ export default () => {
         <div
             style={{
                 // DESIGN.md — pakai semantic token, bukan raw hex.
+                // Stop dibuat ber-alpha supaya grid background (body::before/::after,
+                // z-index -1) tetap tembus; dengan gradient opaque layer ini menutupinya.
                 background:
-                    'radial-gradient(circle at top right, var(--z0ne-auth-glow, #1a1a2e) 0%, var(--z0ne-surface-base, #09090b) 100%)',
+                    'radial-gradient(circle at top right, rgba(26, 26, 46, 0.55) 0%, rgba(9, 9, 11, 0.35) 100%)',
                 minHeight: '100vh',
             }}
             className={'pt-8 xl:pt-32'}

@@ -49,7 +49,7 @@ const inputStyle = css<Props>`
 
     & + .input-help {
         ${tw`mt-1.5 text-xs`};
-        ${(props) => (props.hasError ? tw`text-rose-400 font-medium` : tw`text-neutral-400`)};
+        ${(props) => (props.hasError ? tw`text-red-400 font-medium` : tw`text-neutral-400`)};
     }
 
     &:required,
@@ -59,15 +59,15 @@ const inputStyle = css<Props>`
 
     &:not(:disabled):not(:read-only):focus {
         ${tw`shadow-md border-cyan-500/80 ring-2 ring-cyan-500/50`};
-        ${(props) => props.hasError && tw`border-rose-500/80 ring-2 ring-rose-500/50`};
+        ${(props) => props.hasError && tw`border-red-500/80 ring-2 ring-red-500/50`};
     }
 
     &:disabled {
-        ${tw`opacity-60 cursor-not-allowed bg-neutral-950/80`};
+        ${tw`opacity-60 cursor-not-allowed bg-neutral-900`};
     }
 
     ${(props) => props.isLight && light};
-    ${(props) => props.hasError && tw`text-rose-100 border-rose-500/80 hover:border-rose-400`};
+    ${(props) => props.hasError && tw`text-red-100 border-red-500/80 hover:border-red-400`};
 `;
 const Input = styled.input<Props>`
     &:not([type='checkbox']):not([type='radio']) {

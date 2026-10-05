@@ -19,7 +19,7 @@ const ButtonStyle = styled.button<Omit<Props, 'isLoading'>>`
     }
 
     &:focus-visible {
-        ${tw`ring-2 ring-offset-2 ring-offset-neutral-950 ring-cyan-400`};
+        ${tw`ring-2 ring-offset-2 ring-offset-neutral-900 ring-cyan-400`};
     }
 
     ${(props) =>
