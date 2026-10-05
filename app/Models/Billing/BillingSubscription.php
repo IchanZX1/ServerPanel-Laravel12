@@ -57,9 +57,11 @@ class BillingSubscription extends Model
     /** Invoice pending terbaru (dipakai badge/header, bukan load semua). */
     public function pendingInvoice(): HasOne
     {
+        // `ofMany` sudah menentukan baris terpilih via MAX(id); jangan tambah
+        // `latest()` karena ORDER BY pada subquery agregat memicu error hanya-baca
+        // (only_full_group_by) di MySQL.
         return $this->hasOne(BillingInvoice::class, 'subscription_id')
             ->where('status', BillingInvoice::STATUS_PENDING)
-            ->latest('id')
             ->ofMany('id', 'max');
     }
 
