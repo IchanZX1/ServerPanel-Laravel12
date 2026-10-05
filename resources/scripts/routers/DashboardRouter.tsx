@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Route, Switch } from 'react-router-dom';
-import NavigationBar from '@/components/NavigationBar';
+import AppShell from '@/components/layout/AppShell';
 import DashboardContainer from '@/components/dashboard/DashboardContainer';
 import { NotFound } from '@/components/elements/ScreenBlock';
 import TransitionRouter from '@/TransitionRouter';
@@ -14,22 +14,22 @@ import InvoiceContainer from '@/components/dashboard/store/InvoiceContainer';
 export default () => {
     const location = useLocation();
 
+    const accountSubNav =
+        location.pathname.startsWith('/account') &&
+        (
+            <SubNavigation vertical title={'Account'}>
+                {routes.account
+                    .filter((route) => !!route.name)
+                    .map(({ path, name, exact = false }) => (
+                        <NavLink key={path} to={`/account/${path}`.replace('//', '/')} exact={exact}>
+                            {name}
+                        </NavLink>
+                    ))}
+            </SubNavigation>
+        );
+
     return (
-        <>
-            <NavigationBar />
-            {location.pathname.startsWith('/account') && (
-                <SubNavigation>
-                    <div>
-                        {routes.account
-                            .filter((route) => !!route.name)
-                            .map(({ path, name, exact = false }) => (
-                                <NavLink key={path} to={`/account/${path}`.replace('//', '/')} exact={exact}>
-                                    {name}
-                                </NavLink>
-                            ))}
-                    </div>
-                </SubNavigation>
-            )}
+        <AppShell subNavigation={accountSubNav as React.ReactNode}>
             <TransitionRouter>
                 <React.Suspense fallback={<Spinner centered />}>
                     <Switch location={location}>
@@ -53,6 +53,6 @@ export default () => {
                     </Switch>
                 </React.Suspense>
             </TransitionRouter>
-        </>
+        </AppShell>
     );
 };

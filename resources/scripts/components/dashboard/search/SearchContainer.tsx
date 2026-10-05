@@ -4,8 +4,18 @@ import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import useEventListener from '@/plugins/useEventListener';
 import SearchModal from '@/components/dashboard/search/SearchModal';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
+import tw from 'twin.macro';
 
-export default () => {
+interface Props {
+    /**
+     * Bila diisi, komponen dirender sebagai baris penuh (ikon + label + hint
+     * pintasan) agar cocok dipakai di dalam sidebar. Tanpa prop ini perilaku
+     * lamanya (ikon saja + tooltip) dipertahankan.
+     */
+    label?: string;
+}
+
+export default ({ label }: Props) => {
     const [visible, setVisible] = useState(false);
 
     useEventListener('keydown', (e: KeyboardEvent) => {
@@ -15,6 +25,21 @@ export default () => {
             }
         }
     });
+
+    if (label) {
+        return (
+            <>
+                {visible && <SearchModal appear visible={visible} onDismissed={() => setVisible(false)} />}
+                <button className={'navigation-link'} type={'button'} onClick={() => setVisible(true)}>
+                    <FontAwesomeIcon icon={faSearch} aria-hidden={'true'} />
+                    <span css={tw`flex-1`}>{label}</span>
+                    <kbd css={tw`text-2xs font-mono text-neutral-500 border border-neutral-700 rounded-xs px-1.5 py-0.5`}>
+                        Ctrl+/
+                    </kbd>
+                </button>
+            </>
+        );
+    }
 
     return (
         <>
