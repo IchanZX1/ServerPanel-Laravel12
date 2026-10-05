@@ -15,8 +15,23 @@ return [
     'maelyn_api_key' => env('MAELYN_API_KEY', ''),
     'sociabuzz_username' => env('SOCIABUZZ_USERNAME', 'kureiza'),
 
-    // Jeda polling status invoice (detik). Invoice gateway expired ~3 menit.
+    // Jeda polling status invoice (detik).
+    //
+    // Diabaikan saat QUEUE_CONNECTION=sync — polling sebenarnya dijalankan
+    // scheduler `billing:verify-pending` setiap menit. Nilai ini dipakai
+    // kalau panel memakai queue driver yang benar-benar antre (database/redis).
     'poll_interval_seconds' => (int) env('BILLING_POLL_INTERVAL', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Grace period expiry (detik)
+    |--------------------------------------------------------------------------
+    |
+    | Jarak aman setelah `gateway_expires_at` sebelum invoice di-expire saat
+    | status gateway tidak terbaca. Pembayaran yang masuk tepat di menit akhir
+    | masih sempat ter-scrape sebagai PAID.
+    */
+    'expiry_grace_seconds' => (int) env('BILLING_EXPIRY_GRACE_SECONDS', 120),
 
     /*
     |--------------------------------------------------------------------------

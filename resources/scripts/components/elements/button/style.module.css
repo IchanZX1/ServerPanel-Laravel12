@@ -1,19 +1,19 @@
 .button {
     @apply px-4 py-2 inline-flex items-center justify-center;
-    @apply rounded text-base font-semibold transition-all duration-100;
-    @apply focus:ring-[3px] focus:ring-offset-2 focus:ring-offset-gray-700 focus:ring-opacity-50;
+    @apply rounded-lg text-sm font-medium transition-all duration-150 active:scale-[0.98];
+    @apply focus:ring-2 focus:ring-offset-2 focus:ring-offset-neutral-900 focus:outline-none;
 
     /* Sizing Controls */
     &.small {
-        @apply px-4 py-0 h-8 font-normal text-sm focus:ring-2;
+        @apply px-3 py-1.5 h-8 text-xs focus:ring-2;
     }
 
     &.large {
-        @apply px-5 py-3;
+        @apply px-6 py-3 text-base;
     }
 
     &.secondary {
-        @apply text-gray-50 bg-transparent;
+        @apply text-neutral-200 bg-transparent hover:bg-neutral-800/60;
 
         &:disabled {
             background: transparent !important;
@@ -21,11 +21,11 @@
     }
 
     &:disabled {
-        @apply cursor-not-allowed;
+        @apply cursor-not-allowed opacity-50 shadow-none transform-none;
     }
 
     &.square {
-        @apply p-0 w-12 h-12;
+        @apply p-0 w-10 h-10;
 
         &.small {
             @apply w-8 h-8;
@@ -34,40 +34,40 @@
 }
 
 .primary {
-    @apply bg-blue-600 text-blue-50;
-    @apply hover:bg-blue-500 active:bg-blue-500 focus:ring-blue-400 focus:ring-opacity-75;
+    @apply bg-blue-600 text-white shadow-md shadow-blue-900/30 border border-blue-500/30;
+    @apply hover:bg-blue-500 hover:shadow-blue-900/50 active:bg-blue-600 focus:ring-blue-500/80;
 
     &.secondary {
         @apply hover:bg-blue-600 active:bg-blue-600;
     }
 
     &:disabled {
-        @apply bg-blue-500/75 text-blue-200/75;
+        @apply bg-blue-600/40 text-blue-200/50 border-transparent;
     }
 }
 
 .text {
-    @apply bg-gray-500 text-gray-50;
-    @apply hover:bg-gray-400 active:bg-gray-400 focus:ring-gray-300 focus:ring-opacity-50;
+    @apply bg-neutral-800 text-neutral-200 border border-neutral-700/60 shadow-sm;
+    @apply hover:bg-neutral-700/80 hover:text-white active:bg-neutral-800 focus:ring-neutral-500/60;
 
     &.secondary {
-        @apply hover:bg-gray-500 active:bg-gray-500;
+        @apply hover:bg-neutral-700 active:bg-neutral-800;
     }
 
     &:disabled {
-        @apply bg-gray-500/75 text-gray-200/75;
+        @apply bg-neutral-800/40 text-neutral-400/50 border-transparent;
     }
 }
 
 .danger {
-    @apply bg-red-600 text-gray-50;
-    @apply hover:bg-red-500 active:bg-red-500 focus:ring-red-400 focus:ring-opacity-75;
+    @apply bg-rose-600 text-white shadow-md shadow-rose-950/30 border border-rose-500/30;
+    @apply hover:bg-rose-500 hover:shadow-rose-950/50 active:bg-rose-600 focus:ring-rose-500/80;
 
     &.secondary {
-        @apply hover:bg-red-600 active:bg-red-600;
+        @apply hover:bg-rose-600 active:bg-rose-600;
     }
 
     &:disabled {
-        @apply bg-red-600/75 text-red-50/75;
+        @apply bg-rose-600/40 text-rose-200/50 border-transparent;
     }
 }

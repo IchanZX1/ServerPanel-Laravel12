@@ -13,8 +13,15 @@ use Pterodactyl\Services\Billing\SociabuzzGatewayService;
 
 /**
  * Verifikasi status invoice pending via scrape redirect_url.
- * Self re-dispatch dengan delay sampai PAID, EXPIRED, atau lewat
- * gateway_expires_at + buffer.
+ *
+ * Job ini TIDAK mem-poll dirinya sendiri. Polling berkala dijalankan oleh
+ * scheduler (`billing:verify-pending`, setiap menit). Alasannya:
+ * `QUEUE_CONNECTION=sync` mengabaikan `delay()` (SyncQueue::later() hanya
+ * memanggil push()), sehingga self re-dispatch akan dieksekusi inline dan
+ * berujung rekursi tak terbatas selama status masih PENDING.
+ *
+ * Urutan cek penting: gateway DULU, expiry BELAKANGAN. Invoice yang sudah
+ * dibayar tidak boleh di-expire hanya karena `gateway_expires_at` lewat.
  */
 class VerifyInvoicePaymentJob implements ShouldQueue
 {
@@ -36,16 +43,29 @@ class VerifyInvoicePaymentJob implements ShouldQueue
             return;
         }
 
-        // Lewat gateway_expires_at + buffer 1 menit -> expired.
-        if (!is_null($this->invoice->gateway_expires_at) && $this->invoice->gateway_expires_at->lt(now()->copy()->addMinute())) {
+        // redirect_url dibersihkan setelah invoice tidak bisa dibayar lagi,
+        // jadi ini juga jadi penanda invoice sudah mati.
+        if (empty($this->invoice->redirect_url)) {
             $this->invoice->update(['status' => BillingInvoice::STATUS_EXPIRED]);
-            Log::info('Billing: invoice expired', ['invoice_id' => $this->invoice->id]);
+            Log::info('Billing: invoice expired (payload kosong)', ['invoice_id' => $this->invoice->id]);
 
             return;
         }
 
         $gateway = app()->make(SociabuzzGatewayService::class);
-        $status = $gateway->checkPaymentStatus($this->invoice->redirect_url);
+
+        try {
+            $status = $gateway->checkPaymentStatus($this->invoice->redirect_url);
+        } catch (\Throwable $e) {
+            // Gateway tidak bisa dihubungi (mis. cURL error 60 di dev): biarkan
+            // invoice tetap pending supaya poll berikutnya mencoba lagi.
+            Log::warning('Billing: gagal cek status gateway', [
+                'invoice_id' => $this->invoice->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return;
+        }
 
         if ($status === SociabuzzGatewayService::STATUS_PAID) {
             $this->invoice->update(['status' => BillingInvoice::STATUS_PAID, 'paid_at' => now()]);
@@ -54,16 +74,22 @@ class VerifyInvoicePaymentJob implements ShouldQueue
             return;
         }
 
-        if ($status === SociabuzzGatewayService::STATUS_EXPIRED) {
+        // Gateway bilang expired, ATAU status tak terbaca dan deadline sudah
+        // lewat + grace. Grace mencegah race saat pembayaran tepat di menit akhir.
+        $graceSeconds = (int) config('billing.expiry_grace_seconds', 120);
+        $pastDeadline = $this->invoice->paymentDeadline()->addSeconds($graceSeconds)->isPast();
+
+        if ($status === SociabuzzGatewayService::STATUS_EXPIRED || $pastDeadline) {
             $this->invoice->update(['status' => BillingInvoice::STATUS_EXPIRED]);
-            Log::info('Billing: invoice expired', ['invoice_id' => $this->invoice->id]);
+            Log::info('Billing: invoice expired', [
+                'invoice_id' => $this->invoice->id,
+                'gateway_status' => $status,
+            ]);
 
             return;
         }
 
-        // PENDING / UNKNOWN -> re-dispatch delay.
-        self::dispatch($this->invoice)
-            ->delay(now()->addSeconds(max((int) config('billing.poll_interval_seconds'), 10)))
-            ->onQueue('billing');
+        // Masih PENDING / UNKNOWN dan belum lewat deadline -> biarkan scheduler
+        // memanggil ulang job ini pada menit berikutnya.
     }
 }

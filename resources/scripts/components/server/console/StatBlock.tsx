@@ -20,22 +20,22 @@ export default ({ title, copyOnClick, icon, color, className, children }: StatBl
 
     return (
         <CopyOnClick text={copyOnClick}>
-            <div className={classNames(styles.stat_block, 'bg-gray-600', className)}>
-                <div className={classNames(styles.status_bar, color || 'bg-gray-700')} />
-                <div className={classNames(styles.icon, color || 'bg-gray-700')}>
+            <div className={classNames(styles.stat_block, className)}>
+                <div className={classNames(styles.status_bar, color || 'bg-cyan-500/80')} />
+                <div className={classNames(styles.icon, color || 'bg-neutral-800/80 border border-neutral-700/50')}>
                     <Icon
                         icon={icon}
                         className={classNames({
-                            'text-gray-100': !color || color === 'bg-gray-700',
-                            'text-gray-50': color && color !== 'bg-gray-700',
+                            'text-neutral-200': !color,
+                            'text-neutral-50': color,
                         })}
                     />
                 </div>
                 <div className={'flex flex-col justify-center overflow-hidden w-full'}>
-                    <p className={'font-header font-medium leading-tight text-xs md:text-sm text-gray-200'}>{title}</p>
+                    <p className={'font-sans font-medium text-xs tracking-wider uppercase text-neutral-400'}>{title}</p>
                     <div
                         ref={ref}
-                        className={'h-[1.75rem] w-full font-semibold text-gray-50 truncate'}
+                        className={'h-[1.75rem] w-full font-sans font-semibold text-neutral-100 truncate mt-0.5'}
                         style={{ fontSize }}
                     >
                         {children}

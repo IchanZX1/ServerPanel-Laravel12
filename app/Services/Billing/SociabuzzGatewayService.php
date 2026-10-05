@@ -116,12 +116,12 @@ class SociabuzzGatewayService
             return self::STATUS_PENDING;
         }
 
-        // Fallback: cek berdasarkan konten halaman.
+        // Fallback: cek berdasarkan konten halaman (hanya keyword spesifik, bukan substring generik "expired").
         $lowerHtml = strtolower($html);
         if (str_contains($lowerHtml, 'payment successful')) {
             return self::STATUS_PAID;
         }
-        if (str_contains($lowerHtml, 'link expired') || str_contains($lowerHtml, 'expired')) {
+        if (str_contains($lowerHtml, 'link expired')) {
             return self::STATUS_EXPIRED;
         }
 

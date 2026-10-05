@@ -5,6 +5,7 @@ namespace Pterodactyl\Http\Controllers\Billing;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Jobs\Billing\VerifyInvoicePaymentJob;
 use Pterodactyl\Models\Billing\BillingInvoice;
@@ -172,6 +173,10 @@ class BillingController extends Controller
 
     /**
      * Trigger verifikasi manual ("Saya sudah bayar").
+     *
+     * Dijalankan SINKRON lewat job yang sama dengan scheduler, supaya tombol
+     * ini langsung memberi status terbaru alih-alih hanya menjadwalkan poll.
+     * Idempoten: aman dipanggil berulang kali.
      */
     public function checkInvoice(Request $request, BillingInvoice $invoice): JsonResponse
     {
@@ -183,9 +188,31 @@ class BillingController extends Controller
             return response()->json(['invoice' => $invoice->fresh()]);
         }
 
-        VerifyInvoicePaymentJob::dispatch($invoice)->onQueue('billing');
+        try {
+            dispatch_sync(new VerifyInvoicePaymentJob($invoice));
+        } catch (\Throwable $e) {
+            // Gateway bisa saja tidak terjangkau tepat saat user menekan tombol.
+            // Scheduler tetap mencoba lagi pada menit berikutnya.
+            Log::warning('Billing: verifikasi manual gagal', [
+                'invoice_id' => $invoice->id,
+                'error' => $e->getMessage(),
+            ]);
 
-        return response()->json(['message' => 'Verifikasi dimulai, cek lagi beberapa saat.', 'invoice' => $invoice->fresh()]);
+            return response()->json([
+                'message' => 'Belum bisa memverifikasi pembayaran, coba lagi sebentar lagi.',
+                'invoice' => $invoice->fresh(),
+            ], 200);
+        }
+
+        $invoice->refresh();
+
+        $message = match ($invoice->status) {
+            BillingInvoice::STATUS_PAID => 'Pembayaran diterima. Server sedang disiapkan.',
+            BillingInvoice::STATUS_EXPIRED => 'Invoice sudah kedaluwarsa.',
+            default => 'Belum ada pembayaran yang terdeteksi. Coba lagi beberapa saat.',
+        };
+
+        return response()->json(['message' => $message, 'invoice' => $invoice]);
     }
 
     /**
