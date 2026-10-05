@@ -44,12 +44,12 @@ const inputStyle = css<Props>`
     // Reset to normal styling.
     resize: none;
     ${tw`appearance-none outline-none w-full min-w-0`};
-    ${tw`p-3 border-2 rounded-md text-sm transition-all duration-150`};
-    ${tw`bg-neutral-600 border-neutral-500 hover:border-neutral-400 text-neutral-200 shadow-none focus:ring-0`};
+    ${tw`p-3 border rounded-lg text-sm transition-all duration-150`};
+    ${tw`bg-neutral-900/90 border-neutral-800 hover:border-neutral-700 text-neutral-100 shadow-sm`};
 
     & + .input-help {
-        ${tw`mt-1 text-xs`};
-        ${(props) => (props.hasError ? tw`text-red-200` : tw`text-neutral-200`)};
+        ${tw`mt-1.5 text-xs`};
+        ${(props) => (props.hasError ? tw`text-rose-400 font-medium` : tw`text-neutral-400`)};
     }
 
     &:required,
@@ -58,16 +58,16 @@ const inputStyle = css<Props>`
     }
 
     &:not(:disabled):not(:read-only):focus {
-        ${tw`shadow-md border-primary-300 ring-2 ring-primary-400 ring-opacity-50`};
-        ${(props) => props.hasError && tw`border-red-300 ring-red-200`};
+        ${tw`shadow-md border-cyan-500/80 ring-2 ring-cyan-500/50`};
+        ${(props) => props.hasError && tw`border-rose-500/80 ring-2 ring-rose-500/50`};
     }
 
     &:disabled {
-        ${tw`opacity-75`};
+        ${tw`opacity-60 cursor-not-allowed bg-neutral-950/80`};
     }
 
     ${(props) => props.isLight && light};
-    ${(props) => props.hasError && tw`text-red-100 border-red-400 hover:border-red-300`};
+    ${(props) => props.hasError && tw`text-rose-100 border-rose-500/80 hover:border-rose-400`};
 `;
 const Input = styled.input<Props>`
     &:not([type='checkbox']):not([type='radio']) {

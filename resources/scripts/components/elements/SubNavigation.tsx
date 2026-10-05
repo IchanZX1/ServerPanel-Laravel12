@@ -10,10 +10,10 @@ interface Props {
 }
 
 const SubNavigation = styled.div<{ $vertical?: boolean }>`
-    ${(props) => (props.$vertical ? tw`flex flex-col gap-2 mx-3 mt-6 pt-4 border-t border-neutral-800` : tw`w-full bg-neutral-700 shadow overflow-x-auto`)};
+    ${(props) => (props.$vertical ? tw`flex flex-col gap-2 mx-3 mt-6 pt-4 border-t border-neutral-800` : tw`w-full bg-neutral-900/90 border-b border-neutral-800/80 shadow-md backdrop-blur-sm overflow-x-auto`)};
 
     & > .section-title {
-        ${tw`px-4 text-2xs uppercase tracking-wide text-neutral-500`};
+        ${tw`px-4 text-2xs uppercase tracking-wider text-neutral-500 font-medium`};
     }
 
     & > div {
@@ -24,11 +24,11 @@ const SubNavigation = styled.div<{ $vertical?: boolean }>`
         & > div {
             ${(props) =>
                 props.$vertical
-                    ? tw`block px-4 py-2 rounded-md text-sm text-neutral-300 no-underline whitespace-nowrap transition-colors duration-150`
+                    ? tw`block px-4 py-2 rounded-lg text-sm text-neutral-300 no-underline whitespace-nowrap transition-colors duration-150`
                     : tw`inline-block py-3 px-4 text-neutral-300 no-underline whitespace-nowrap transition-all duration-150`};
 
             &:hover {
-                ${(props) => (props.$vertical ? tw`text-neutral-100 bg-neutral-800` : tw`text-neutral-100`)};
+                ${(props) => (props.$vertical ? tw`text-neutral-100 bg-neutral-800/80` : tw`text-neutral-100`)};
             }
 
             &:focus-visible {
@@ -37,10 +37,10 @@ const SubNavigation = styled.div<{ $vertical?: boolean }>`
 
             &:active,
             &.active {
-                ${(props) => (props.$vertical ? tw`text-neutral-100 bg-black` : tw`text-neutral-100`)};
+                ${(props) => (props.$vertical ? tw`text-neutral-100 bg-neutral-950` : tw`text-neutral-100`)};
 
-                box-shadow: inset ${(props) => (props.$vertical ? '2px 0' : '0 -2px')}
-                    ${theme`colors.cyan.600`.toString()};
+                box-shadow: inset ${(props) => (props.$vertical ? '3px 0' : '0 -2px')}
+                    ${theme`colors.cyan.500`.toString()};
             }
         }
     }

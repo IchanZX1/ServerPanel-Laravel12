@@ -44,7 +44,7 @@ const ScreenBlock = ({ title, image, message, onBack, onRetry }: ScreenBlockProp
     <PageContentBlock>
         <div css={tw`flex justify-center`}>
             <div
-                css={tw`w-full sm:w-3/4 md:w-1/2 p-12 md:p-20 bg-neutral-100 rounded-lg shadow-lg text-center relative`}
+                css={tw`w-full sm:w-3/4 md:w-1/2 p-8 md:p-14 bg-neutral-900/90 border border-neutral-800/80 rounded-xl shadow-2xl text-center relative backdrop-blur-sm`}
             >
                 {(typeof onBack === 'function' || typeof onRetry === 'function') && (
                     <div css={tw`absolute left-0 top-0 ml-4 mt-4`}>
@@ -56,9 +56,9 @@ const ScreenBlock = ({ title, image, message, onBack, onRetry }: ScreenBlockProp
                         </ActionButton>
                     </div>
                 )}
-                <img src={image} css={tw`w-2/3 h-auto select-none mx-auto`} />
-                <h2 css={tw`mt-10 text-neutral-900 font-bold text-4xl`}>{title}</h2>
-                <p css={tw`text-sm text-neutral-700 mt-2`}>{message}</p>
+                <img src={image} css={tw`w-1/2 h-auto select-none mx-auto opacity-90`} />
+                <h2 css={tw`mt-8 text-neutral-100 font-bold text-3xl tracking-tight`}>{title}</h2>
+                <p css={tw`text-sm text-neutral-400 mt-2`}>{message}</p>
             </div>
         </div>
     </PageContentBlock>

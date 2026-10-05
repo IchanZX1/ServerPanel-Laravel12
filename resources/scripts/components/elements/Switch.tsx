@@ -12,7 +12,7 @@ const ToggleContainer = styled.div`
         ${tw`hidden`};
 
         &:checked + label {
-            ${tw`bg-primary-500 border-primary-700 shadow-none`};
+            ${tw`bg-cyan-600 border-cyan-500 shadow-none`};
         }
 
         &:checked + label:before {
@@ -21,17 +21,15 @@ const ToggleContainer = styled.div`
     }
 
     & > label {
-        ${tw`mb-0 block overflow-hidden cursor-pointer bg-neutral-400 border border-neutral-700 rounded-full h-6 shadow-inner`};
-        transition: all 75ms linear;
+        ${tw`mb-0 block overflow-hidden cursor-pointer bg-neutral-800 border border-neutral-700 rounded-full h-6 shadow-inner`};
+        transition: all 150ms ease;
 
         &::before {
-            ${tw`absolute block bg-white border h-5 w-5 rounded-full`};
+            ${tw`absolute block bg-neutral-100 border-0 h-5 w-5 rounded-full shadow-md`};
             top: 0.125rem;
             right: calc(50% + 0.125rem);
-            //width: 1.25rem;
-            //height: 1.25rem;
             content: '';
-            transition: all 75ms ease-in;
+            transition: all 150ms ease-in-out;
         }
     }
 `;
@@ -57,7 +55,7 @@ const Switch = ({ name, label, description, defaultChecked, readOnly, onChange, 
                         id={uuid}
                         name={name}
                         type={'checkbox'}
-                        onChange={(e) => onChange && onChange(e)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange && onChange(e)}
                         defaultChecked={defaultChecked}
                         disabled={readOnly}
                     />

@@ -6,7 +6,7 @@ interface Props {
 }
 
 const Select = styled.select<Props>`
-    ${tw`shadow-none block p-3 pr-8 rounded border w-full text-sm transition-colors duration-150 ease-linear`};
+    ${tw`shadow-sm block p-3 pr-8 rounded-lg border w-full text-sm transition-all duration-150 ease-linear`};
 
     &,
     &:hover:not(:disabled),
@@ -28,12 +28,15 @@ const Select = styled.select<Props>`
     ${(props) =>
         !props.hideDropdownArrow &&
         css`
-            ${tw`bg-neutral-600 border-neutral-500 text-neutral-200`};
+            ${tw`bg-neutral-900/90 border-neutral-800 text-neutral-100`};
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='%23C3D1DF' d='M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z'/%3e%3c/svg%3e ");
 
-            &:hover:not(:disabled),
+            &:hover:not(:disabled) {
+                ${tw`border-neutral-700`};
+            }
+
             &:focus {
-                ${tw`border-neutral-400`};
+                ${tw`border-cyan-500/80 ring-2 ring-cyan-500/50`};
             }
         `};
 `;

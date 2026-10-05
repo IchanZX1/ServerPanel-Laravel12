@@ -11,7 +11,7 @@ interface Props {
 }
 
 const ButtonStyle = styled.button<Omit<Props, 'isLoading'>>`
-    ${tw`relative inline-block rounded-md p-2 uppercase tracking-wide text-sm transition-all duration-150 border`};
+    ${tw`relative inline-block rounded-lg p-2 font-medium tracking-wide text-sm transition-all duration-150 border active:scale-[0.98]`};
 
     /* DESIGN.md — focus indicator wajib terlihat, tidak boleh tersembunyi. */
     &:focus {
@@ -19,7 +19,7 @@ const ButtonStyle = styled.button<Omit<Props, 'isLoading'>>`
     }
 
     &:focus-visible {
-        ${tw`ring-[3px] ring-offset-2 ring-offset-neutral-900 ring-primary-400`};
+        ${tw`ring-2 ring-offset-2 ring-offset-neutral-950 ring-cyan-400`};
     }
 
     ${(props) =>
