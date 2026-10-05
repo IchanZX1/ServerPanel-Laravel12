@@ -40,6 +40,20 @@ class SubscriptionProvisionService
     {
         $plan = BillingPlan::query()->findOrFail($subscription->plan_id);
 
+        // Egg variable wajib (mis. CMD_RUN di egg NodeJS) harus terisi atau
+        // VariableValidatorService akan menolak pembuatan server. Plan yang
+        // environment-nya kosong berutang pada default value egg variable.
+        $environment = $plan->environment ?? [];
+        $defaults = \Pterodactyl\Models\EggVariable::query()
+            ->where('egg_id', $plan->egg_id)
+            ->pluck('default_value', 'env_variable');
+
+        foreach ($defaults as $env => $defaultValue) {
+            if (!array_key_exists($env, $environment)) {
+                $environment[$env] = $defaultValue;
+            }
+        }
+
         $data = [
             'external_id' => self::EXTERNAL_ID_PREFIX . $subscription->id,
             'name' => $serverName,
@@ -48,7 +62,7 @@ class SubscriptionProvisionService
             'egg_id' => $plan->egg_id,
             'image' => $plan->docker_image,
             'startup' => $plan->startup,
-            'environment' => $plan->environment ?? [],
+            'environment' => $environment,
             'memory' => $plan->memory,
             'swap' => $plan->swap,
             'disk' => $plan->disk,
