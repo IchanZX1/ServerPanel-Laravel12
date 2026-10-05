@@ -191,11 +191,12 @@ class BillingController extends Controller
         try {
             dispatch_sync(new VerifyInvoicePaymentJob($invoice));
         } catch (\Throwable $e) {
-            // Gateway bisa saja tidak terjangkau tepat saat user menekan tombol.
-            // Scheduler tetap mencoba lagi pada menit berikutnya.
-            Log::warning('Billing: verifikasi manual gagal', [
+            // Job sync menelan exception provisioning ke sini (lihat MarkInvoicePaidJob).
+            // Log dengan level error supaya kegagalan pembuatan server tidak silent.
+            Log::error('Billing: verifikasi manual gagal', [
                 'invoice_id' => $invoice->id,
                 'error' => $e->getMessage(),
+                'exception' => get_class($e),
             ]);
 
             return response()->json([
@@ -205,6 +206,23 @@ class BillingController extends Controller
         }
 
         $invoice->refresh();
+
+        // Sudah PAID tapi server belum terbuat: provisioning gagal. Beri pesan
+        // jujur, jangan bilang "sedang disiapkan" (server_id masih null).
+        if ($invoice->status === BillingInvoice::STATUS_PAID) {
+            $subscription = $invoice->subscription()->first();
+            if (!is_null($subscription) && is_null($subscription->server_id)) {
+                Log::error('Billing: invoice paid tanpa server (provisioning gagal)', [
+                    'invoice_id' => $invoice->id,
+                    'subscription_id' => $subscription->id,
+                ]);
+
+                return response()->json([
+                    'message' => 'Pembayaran diterima, tetapi server belum berhasil dibuat. Admin sudah dicatat untuk menindaklanjuti.',
+                    'invoice' => $invoice,
+                ]);
+            }
+        }
 
         $message = match ($invoice->status) {
             BillingInvoice::STATUS_PAID => 'Pembayaran diterima. Server sedang disiapkan.',

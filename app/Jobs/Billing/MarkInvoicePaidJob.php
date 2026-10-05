@@ -83,8 +83,24 @@ class MarkInvoicePaidJob implements ShouldQueue
             $planName = preg_replace('/[^a-z0-9]+/i', '-', strtolower($plan->name));
             $serverName = $subscription->user->username . '-' . trim($planName, '-') . '-' . $subscription->id;
 
-            app()->make(SubscriptionProvisionService::class)
-                ->handle($subscription, $serverName);
+            try {
+                app()->make(SubscriptionProvisionService::class)
+                    ->handle($subscription, $serverName);
+            } catch (\Throwable $e) {
+                // Transaksi di atas sudah men-set status active. Kalau provisioning
+                // gagal, kembalikan ke pending_payment supaya dokumentasi kelas ini
+                // benar: invoice tetap paid, subscription bisa di-retry admin.
+                $subscription->update(['status' => BillingSubscription::STATUS_PENDING_PAYMENT]);
+
+                Log::error('Billing: provisioning gagal, subscription dikembalikan ke pending_payment', [
+                    'invoice_id' => $invoice->id,
+                    'subscription_id' => $subscription->id,
+                    'plan_id' => $plan->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                throw $e;
+            }
         }
 
         Log::info('Billing: invoice paid applied', [

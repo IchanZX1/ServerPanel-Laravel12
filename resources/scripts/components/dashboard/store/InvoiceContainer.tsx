@@ -240,6 +240,11 @@ export default () => {
     const statusKind: StatusKind = paid ? 'paid' : expired ? 'expired' : 'pending';
     const statusLabel = paid ? 'Dibayar' : expired ? 'Kedaluwarsa' : 'Menunggu Pembayaran';
 
+    // Provisioning dianggap selesai hanya kalau server benar-benar terhubung ke
+    // subscription. Invoice initial bisa PAID tanpa server bila provisioning gagal.
+    const provisioned = detail.subscription?.server_id != null;
+    const serverName = detail.subscription?.server?.name ?? null;
+
     return (
         <PageContentBlock title={`Invoice ${invoice.order_id}`}>
             <FlashMessageRender byKey={flashKey} css={tw`mb-6`} />
@@ -375,10 +380,20 @@ export default () => {
                                     <h2 css={tw`text-lg font-semibold text-neutral-100 mb-2`} role={'status'}>
                                         Pembayaran terkonfirmasi
                                     </h2>
-                                    <p css={tw`text-sm text-neutral-400 max-w-md mb-6`}>
-                                        Server Anda sedang disiapkan dan akan muncul otomatis di dashboard begitu selesai.
-                                        Proses ini biasanya kurang dari satu menit.
-                                    </p>
+                                    {/* subscription.server_id null = provisioning belum jalan/gagal.
+                                        Jangan janjikan "muncul otomatis" kalau server belum terbuat. */}
+                                    {provisioned ? (
+                                        <p css={tw`text-sm text-neutral-400 max-w-md mb-6`}>
+                                            Server <strong css={tw`text-neutral-200`}>{serverName}</strong> sudah dibuat
+                                            dan sedang disiapkan. Buka dashboard untuk melihatnya.
+                                        </p>
+                                    ) : (
+                                        <p css={tw`text-sm text-neutral-400 max-w-md mb-6`} role={'alert'}>
+                                            Pembayaran sudah kami terima, tetapi server belum berhasil dibuat. Admin sudah
+                                            dicatat untuk menindaklanjuti — hubungi admin bila lebih dari 15 menit belum
+                                            ada server di dashboard.
+                                        </p>
+                                    )}
                                     <div css={tw`flex flex-col sm:flex-row gap-3 w-full sm:w-auto`}>
                                         <Link to={'/account/billing'} css={tw`no-underline`}>
                                             <Button className={'w-full sm:w-auto'}>Lihat Billing</Button>
