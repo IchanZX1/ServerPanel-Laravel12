@@ -21,7 +21,7 @@ export default () => {
     const ref = useRef<Reaptcha>(null);
     const [token, setToken] = useState('');
 
-    const { clearFlashes, addFlash } = useFlash();
+    const { clearFlashes, addError, addFlash } = useFlash();
     const { enabled: recaptchaEnabled, siteKey } = useStoreState((state) => state.settings.data!.recaptcha);
 
     useEffect(() => {
@@ -105,7 +105,7 @@ export default () => {
                     <div css={tw`mt-6 text-center`}>
                         <Link
                             to={'/auth/login'}
-                            css={tw`text-xs text-neutral-500 tracking-wide uppercase no-underline hover:text-neutral-700`}
+                            css={tw`text-xs text-neutral-400 tracking-wide uppercase no-underline hover:text-neutral-200 transition-colors duration-150 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2`}
                         >
                             Return to Login
                         </Link>

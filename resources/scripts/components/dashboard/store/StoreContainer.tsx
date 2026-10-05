@@ -58,31 +58,45 @@ export default () => {
                 <SpinnerOverlay visible={loading} />
 
                 <div css={tw`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4`}>
-                    {plans.length === 0 && !loading && <p css={tw`text-neutral-400`}>Belum ada paket billing aktif.</p>}
+                    {plans.length === 0 && !loading && (
+                        <p css={tw`text-neutral-400`} role={'status'}>
+                            Belum ada paket billing aktif.
+                        </p>
+                    )}
                     {plans.map((plan) => (
-                        <ContentBox key={plan.id} title={plan.name} css={tw`flex flex-col`}>
-                            {plan.description && <p css={tw`text-sm text-neutral-400 mb-2`}>{plan.description}</p>}
+                        <ContentBox
+                            key={plan.id}
+                            title={plan.name}
+                            css={tw`flex flex-col rounded-md shadow-ds-1`}
+                        >
+                            {plan.description && (
+                                <p css={tw`text-sm text-neutral-400 mb-2 break-words`}>{plan.description}</p>
+                            )}
                             <div css={tw`text-sm space-y-1 mb-3`}>
-                                <div css={tw`flex justify-between`}>
+                                <div css={tw`flex justify-between gap-2`}>
                                     <span>Memory</span>
-                                    <span>{plan.memory} MB</span>
+                                    <span css={tw`font-mono`}>{plan.memory} MB</span>
                                 </div>
-                                <div css={tw`flex justify-between`}>
+                                <div css={tw`flex justify-between gap-2`}>
                                     <span>CPU</span>
-                                    <span>{plan.cpu}%</span>
+                                    <span css={tw`font-mono`}>{plan.cpu}%</span>
                                 </div>
-                                <div css={tw`flex justify-between`}>
+                                <div css={tw`flex justify-between gap-2`}>
                                     <span>Disk</span>
-                                    <span>{plan.disk} MB</span>
+                                    <span css={tw`font-mono`}>{plan.disk} MB</span>
                                 </div>
-                                <div css={tw`flex justify-between`}>
+                                <div css={tw`flex justify-between gap-2`}>
                                     <span>Duration</span>
-                                    <span>{plan.duration_days} hari</span>
+                                    <span css={tw`font-mono`}>{plan.duration_days} hari</span>
                                 </div>
                             </div>
                             <div css={tw`mt-auto`}>
-                                <p css={tw`text-xl font-bold text-cyan-400 mb-3`}>{priceFmt(plan.price_cents)}</p>
-                                <Button onClick={() => setSelectedPlan(plan)} className={'w-full'}>
+                                <p css={tw`text-xl font-bold text-cyan-400 mb-3 font-mono`}>{priceFmt(plan.price_cents)}</p>
+                                <Button
+                                    onClick={() => setSelectedPlan(plan)}
+                                    className={'w-full'}
+                                    aria-label={`Beli paket ${plan.name}`}
+                                >
                                     Beli
                                 </Button>
                             </div>
@@ -102,7 +116,7 @@ export default () => {
                 title={selectedPlan ? `Beli ${selectedPlan.name}` : ''}
                 preventExternalClose={submitting}
             >
-                <form id={'billing-checkout-form'} className={'mt-6'} onSubmit={onCheckout}>
+                <form id={'billing-checkout-form'} className={'mt-6'} onSubmit={onCheckout} noValidate>
                     <label className={'block pb-1'} htmlFor={'billing-server-name'}>
                         Nama server
                     </label>
@@ -112,10 +126,18 @@ export default () => {
                         variant={Input.Text.Variants.Loose}
                         placeholder={'mis. My Server'}
                         value={serverName}
+                        aria-invalid={serverName.length > 0 && !nameValid}
+                        aria-describedby={'billing-server-name-error'}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setServerName(e.currentTarget.value)}
                     />
                     {!nameValid && serverName.length > 0 && (
-                        <p css={tw`text-red-400 text-xs mt-2`}>Nama server minimal 3 karakter.</p>
+                        <p
+                            id={'billing-server-name-error'}
+                            role={'alert'}
+                            css={tw`text-red-400 text-xs mt-2`}
+                        >
+                            Nama server minimal 3 karakter.
+                        </p>
                     )}
                     <p css={tw`text-neutral-400 text-xs mt-2`}>
                         Invoice berlaku 3 menit. Server dibuat otomatis setelah pembayaran terverifikasi.

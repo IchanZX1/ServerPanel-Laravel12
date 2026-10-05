@@ -11,7 +11,16 @@ interface Props {
 }
 
 const ButtonStyle = styled.button<Omit<Props, 'isLoading'>>`
-    ${tw`relative inline-block rounded p-2 uppercase tracking-wide text-sm transition-all duration-150 border`};
+    ${tw`relative inline-block rounded-md p-2 uppercase tracking-wide text-sm transition-all duration-150 border`};
+
+    /* DESIGN.md — focus indicator wajib terlihat, tidak boleh tersembunyi. */
+    &:focus {
+        outline: none;
+    }
+
+    &:focus-visible {
+        ${tw`ring-[3px] ring-offset-2 ring-offset-neutral-900 ring-primary-400`};
+    }
 
     ${(props) =>
         ((!props.isSecondary && !props.color) || props.color === 'primary') &&

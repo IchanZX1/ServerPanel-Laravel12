@@ -2,6 +2,9 @@ import tw from 'twin.macro';
 import { createGlobalStyle } from 'styled-components/macro';
 // @ts-expect-error untyped font file
 import font from '@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-normal.woff2';
+// DESIGN.md — font.family.primary=Outfit (adopsi sebagian; palet panel tetap)
+// @ts-expect-error untyped font file
+import outfit from '@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2';
 
 export default createGlobalStyle`
     @font-face {
@@ -13,14 +16,24 @@ export default createGlobalStyle`
         unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
     }
 
+    @font-face {
+        font-family: 'Outfit';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 100 900;
+        src: url(${outfit}) format('woff2-variations');
+        unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+    }
+
     body {
         background-color: var(--z0ne-surface-base, #09090b) !important;
         color: var(--z0ne-text-primary, #fafafa);
         letter-spacing: 0.015em;
+        font-family: 'Outfit', system-ui, sans-serif;
     }
 
     h1, h2, h3, h4, h5, h6 {
-        ${tw`font-medium tracking-normal font-header`};
+        ${tw`font-medium tracking-normal font-sans`};
     }
 
     p {

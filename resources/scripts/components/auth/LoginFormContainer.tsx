@@ -4,6 +4,8 @@ import styled from 'styled-components/macro';
 import { breakpoint } from '@/theme';
 import FlashMessageRender from '@/components/FlashMessageRender';
 import tw from 'twin.macro';
+// Aset di-import lewat webpack (svg-url-loader) — bukan path /assets/svgs/ yang tidak ada.
+import logo from '@/assets/images/pterodactyl.svg';
 
 type Props = React.DetailedHTMLProps<React.FormHTMLAttributes<HTMLFormElement>, HTMLFormElement> & {
     title?: string;
@@ -31,7 +33,10 @@ const Container = styled.div`
 export default forwardRef<HTMLFormElement, Props>(({ title, ...props }, ref) => (
     <Container>
         {title && (
-            <h2 style={{ color: 'var(--z0ne-text-primary, #fafafa)' }} css={tw`text-2xl md:text-3xl text-center font-semibold pb-4`}>
+            <h2
+                style={{ color: 'var(--z0ne-text-primary, #fafafa)' }}
+                css={tw`text-xl md:text-2xl text-center font-semibold pb-4`}
+            >
                 {title}
             </h2>
         )}
@@ -45,25 +50,34 @@ export default forwardRef<HTMLFormElement, Props>(({ title, ...props }, ref) => 
                     borderStyle: 'solid',
                     boxShadow: 'var(--z0ne-shadow-md)',
                 }}
-                css={tw`flex flex-col md:flex-row w-full rounded-2xl overflow-hidden shadow-2xl`}
+                css={tw`flex flex-col md:flex-row w-full rounded-lg overflow-hidden shadow-ds-1`}
             >
-                {/* Left Side: Artwork Image */}
-                <div css={tw`hidden md:block md:w-1/2 relative bg-cover bg-center overflow-hidden min-h-[420px]`}>
+                {/* Left Side: Artwork (decorative) */}
+                <div
+                    aria-hidden={'true'}
+                    css={tw`hidden md:block md:w-1/2 relative bg-cover bg-center overflow-hidden min-h-[420px]`}
+                >
                     <img
                         src={'https://i.pinimg.com/736x/e6/b0/30/e6b03079c3a6c5fc4cda74086e40ef2d.jpg'}
-                        alt="Auth Illustration"
+                        alt={''}
+                        loading={'lazy'}
+                        referrerPolicy={'no-referrer'}
                         css={tw`w-full h-full object-cover block`}
                         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
                     />
                     <div
                         style={{
-                            background: 'linear-gradient(to top, rgba(9, 9, 11, 0.92) 0%, rgba(9, 9, 11, 0.3) 60%, transparent 100%)',
+                            background:
+                                'linear-gradient(to top, rgba(9, 9, 11, 0.92) 0%, rgba(9, 9, 11, 0.3) 60%, transparent 100%)',
                         }}
                         css={tw`absolute inset-0 flex flex-col justify-end p-6 z-10`}
                     >
                         <div css={tw`flex items-center gap-2 mb-2`}>
-                            <img src={'/assets/svgs/pterodactyl.svg'} css={tw`w-8 h-8 block`} alt="Logo" />
-                            <span style={{ color: 'var(--z0ne-text-primary, #fafafa)' }} css={tw`font-semibold text-sm tracking-wide`}>
+                            <img src={logo} alt={''} aria-hidden={'true'} css={tw`w-8 h-8 block`} />
+                            <span
+                                style={{ color: 'var(--z0ne-text-primary, #fafafa)' }}
+                                css={tw`font-semibold text-sm tracking-wide`}
+                            >
                                 ServerPanel
                             </span>
                         </div>
@@ -77,25 +91,19 @@ export default forwardRef<HTMLFormElement, Props>(({ title, ...props }, ref) => 
                 </div>
 
                 {/* Right Side: Form Container */}
-                <div css={tw`w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-center`}>
+                <div css={tw`w-full md:w-1/2 p-5 md:p-7 flex flex-col justify-center`}>
                     <div css={tw`md:hidden mb-4 text-center`}>
-                        <img src={'/assets/svgs/pterodactyl.svg'} css={tw`block w-36 mx-auto mb-2`} />
+                        <img src={logo} alt={''} aria-hidden={'true'} css={tw`block w-24 mx-auto mb-2`} />
                     </div>
                     {props.children}
                 </div>
             </div>
         </Form>
-        <p style={{ color: 'var(--z0ne-text-secondary, #a1a1aa)' }} css={tw`text-center text-xs mt-4`}>
-            &copy; 2015 - {new Date().getFullYear()}&nbsp;
-            <a
-                rel={'noopener nofollow noreferrer'}
-                href={'https://pterodactyl.io'}
-                target={'_blank'}
-                style={{ color: 'var(--z0ne-accent-primary, #3b82f6)' }}
-                css={tw`no-underline hover:underline`}
-            >
-                Pterodactyl Software
-            </a>
+        <p
+            style={{ color: 'var(--z0ne-text-secondary, #a1a1aa)' }}
+            css={tw`text-center text-xs mt-4 break-words`}
+        >
+            &copy; {new Date().getFullYear()} ServerPanel
         </p>
     </Container>
 ));

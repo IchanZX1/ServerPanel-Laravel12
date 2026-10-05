@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import PageContentBlock from '@/components/elements/PageContentBlock';
 import ContentBox from '@/components/elements/ContentBox';
 import SpinnerOverlay from '@/components/elements/SpinnerOverlay';
@@ -6,14 +7,14 @@ import FlashMessageRender from '@/components/FlashMessageRender';
 import { useFlashKey } from '@/plugins/useFlash';
 import useFlash from '@/plugins/useFlash';
 import { Button } from '@/components/elements/button/index';
-import tw from 'twin.macro';
+import tw, { TwStyle } from 'twin.macro';
 import getBillingSubscriptions from '@/api/billing/getBillingSubscriptions';
 import getBillingInvoices from '@/api/billing/getBillingInvoices';
 import checkInvoice from '@/api/billing/checkInvoice';
 import renewSubscription from '@/api/billing/renewSubscription';
 import { BillingInvoice, BillingSubscription } from '@/api/billing/types';
 
-const statusColor: Record<string, ReturnType<typeof tw>> = {
+const statusColor: Record<string, TwStyle> = {
     active: tw`text-green-400`,
     suspended: tw`text-yellow-400`,
     pending_payment: tw`text-blue-400`,
@@ -24,7 +25,28 @@ const statusColor: Record<string, ReturnType<typeof tw>> = {
     failed: tw`text-red-400`,
 };
 
+// Label bahasa Indonesia — status tidak boleh bergantung warna saja (WCAG 1.4.1).
+const statusLabel: Record<string, string> = {
+    active: 'Aktif',
+    suspended: 'Ditangguhkan',
+    pending_payment: 'Menunggu pembayaran',
+    pending: 'Menunggu pembayaran',
+    paid: 'Dibayar',
+    expired: 'Kedaluwarsa',
+    cancelled: 'Dibatalkan',
+    failed: 'Gagal',
+};
+
 const priceFmt = (c: number) => `Rp ${c.toLocaleString('id-ID')}`;
+
+const StatusBadge = ({ status }: { status: string }) => (
+    <span
+        css={[tw`text-sm font-medium`, statusColor[status] ?? tw`text-neutral-400`]}
+        title={statusLabel[status] ?? status}
+    >
+        {statusLabel[status] ?? status}
+    </span>
+);
 
 export default () => {
     const flashKey = 'billing-history';
@@ -55,9 +77,9 @@ export default () => {
             if (res.invoice?.status === 'paid') {
                 addFlash({ key: flashKey, type: 'success', message: 'Pembayaran diterima!' });
             } else if (res.invoice?.status === 'expired') {
-                addFlash({ key: flashKey, type: 'error', message: 'Invoice expired — silakan checkout/renew lagi.' });
+                addFlash({ key: flashKey, type: 'error', message: 'Invoice kedaluwarsa — silakan checkout/renew lagi.' });
             } else {
-                addFlash({ key: flashKey, type: 'info', message: 'Status masih pending. Cek lagi beberapa saat.' });
+                addFlash({ key: flashKey, type: 'info', message: 'Status masih menunggu pembayaran. Cek lagi beberapa saat.' });
             }
         } catch (e: any) {
             clearAndAddHttpError(e);
@@ -73,10 +95,9 @@ export default () => {
             addFlash({
                 key: flashKey,
                 type: 'success',
-                message: `Invoice renewal dibuat: ${res.invoice.order_id}. Bayar via link dibawah ini.`,
+                message: `Invoice renewal dibuat: ${res.invoice.order_id}.`,
             });
-            // Tampilkan tautan pembayaran renewal langsung
-            window.open(res.redirect_url, '_blank');
+            window.open(res.redirect_url ?? `/store/invoice/${res.invoice.id}`, '_blank', 'noopener,noreferrer');
         } catch (e: any) {
             clearAndAddHttpError(e);
         }
@@ -93,8 +114,16 @@ export default () => {
             <div css={tw`relative`}>
                 <SpinnerOverlay visible={loading} />
 
-                <ContentBox title={'Subscriptions'} css={tw`mb-6`}>
-                    {subscriptions.length === 0 && <p css={tw`text-neutral-400 text-sm`}>Belum ada subscription. Beli di <a href="/store" css={tw`text-cyan-400`}>Store</a>.</p>}
+                <ContentBox title={'Subscriptions'} css={tw`mb-6 rounded-md shadow-ds-1`}>
+                    {subscriptions.length === 0 && (
+                        <p css={tw`text-neutral-400 text-sm`} role={'status'}>
+                            Belum ada subscription. Beli di{' '}
+                            <Link to={'/store'} css={tw`text-cyan-400`}>
+                                Store
+                            </Link>
+                            .
+                        </p>
+                    )}
                     {subscriptions.map((s) => (
                         <div key={s.id} css={tw`border-b border-neutral-600 py-3 last:border-0`}>
                             <div css={tw`flex justify-between items-center flex-wrap gap-2`}>
@@ -102,18 +131,27 @@ export default () => {
                                     <p css={tw`font-medium`}>
                                         #{s.id} — {s.plan?.name ?? `Plan #${s.plan_id}`}
                                         {s.server ? (
-                                            <a href={`/server/${s.server.id}`} css={tw`ml-2 text-cyan-400 text-sm no-underline`}>{s.server.name}</a>
+                                            <a
+                                                href={`/server/${s.server.id}`}
+                                                css={tw`ml-2 text-cyan-400 text-sm no-underline`}
+                                            >
+                                                {s.server.name}
+                                            </a>
                                         ) : (
-                                            <span css={tw`ml-2 text-neutral-500 text-sm`}>(tanpa server)</span>
+                                            <span css={tw`ml-2 text-neutral-400 text-sm`}>(tanpa server)</span>
                                         )}
                                     </p>
-                                    <p css={tw`text-xs text-neutral-500`}>Expires: {s.expires_at ? new Date(s.expires_at).toLocaleString('id-ID') : '—'}</p>
+                                    <p css={tw`text-xs text-neutral-400`}>
+                                        Expires: {s.expires_at ? new Date(s.expires_at).toLocaleString('id-ID') : '—'}
+                                    </p>
                                 </div>
                                 <div css={tw`text-right`}>
-                                    <span css={[tw`text-sm font-medium`, statusColor[s.status] ?? tw``]}>{s.status}</span>
+                                    <StatusBadge status={s.status} />
                                     {canRenew(s) && (
                                         <div css={tw`mt-1`}>
-                                            <Button onClick={() => onRenew(s)}>Perpanjang</Button>
+                                            <Button onClick={() => onRenew(s)} aria-label={`Perpanjang subscription #${s.id}`}>
+                                                Perpanjang
+                                            </Button>
                                         </div>
                                     )}
                                 </div>
@@ -122,21 +160,40 @@ export default () => {
                     ))}
                 </ContentBox>
 
-                <ContentBox title={'Invoices'}>
-                    {invoices.length === 0 && <p css={tw`text-neutral-400 text-sm`}>Belum ada invoice.</p>}
+                <ContentBox title={'Invoices'} css={tw`rounded-md shadow-ds-1`}>
+                    {invoices.length === 0 && (
+                        <p css={tw`text-neutral-400 text-sm`} role={'status'}>
+                            Belum ada invoice.
+                        </p>
+                    )}
                     {invoices.map((i) => (
                         <div key={i.id} css={tw`border-b border-neutral-600 py-3 last:border-0`}>
                             <div css={tw`flex justify-between items-center flex-wrap gap-2`}>
                                 <div>
-                                    <p css={tw`font-medium text-sm`}><code>{i.order_id}</code> <span css={tw`text-xs text-neutral-500`}>{i.type}</span></p>
-                                    <p css={tw`text-sm`}>{priceFmt(i.amount_cents)}</p>
+                                    <p css={tw`font-medium text-sm`}>
+                                        <code>{i.order_id}</code>{' '}
+                                        <span css={tw`text-xs text-neutral-400`}>
+                                            {i.type === 'renewal' ? 'perpanjangan' : 'awal'}
+                                        </span>
+                                    </p>
+                                    <p css={tw`text-sm font-mono`}>{priceFmt(i.amount_cents)}</p>
                                 </div>
                                 <div css={tw`text-right`}>
-                                    <span css={[tw`text-sm font-medium`, statusColor[i.status] ?? tw``]}>{i.status}</span>
+                                    <StatusBadge status={i.status} />
                                     {i.status === 'pending' && (
-                                        <div css={tw`mt-1 space-x-2`}>
-                                            <a href={`/store/invoice/${i.id}`} css={tw`text-cyan-400 text-sm no-underline`}>Bayar</a>
-                                            <Button onClick={() => onCheck(i)}>Cek status</Button>
+                                        <div css={tw`mt-1 flex items-center justify-end gap-2`}>
+                                            <Link
+                                                to={`/store/invoice/${i.id}`}
+                                                css={tw`text-cyan-400 text-sm no-underline`}
+                                            >
+                                                Bayar
+                                            </Link>
+                                            <Button
+                                                onClick={() => onCheck(i)}
+                                                aria-label={`Cek status invoice ${i.order_id}`}
+                                            >
+                                                Cek status
+                                            </Button>
                                         </div>
                                     )}
                                 </div>

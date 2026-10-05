@@ -41,7 +41,7 @@ export interface BillingInvoice {
     order_id: string;
     inv_id: string | null;
     amount_cents: number;
-    redirect_url: string;
+    redirect_url: string | null;
     qr_string: string | null;
     gateway_expires_at: string | null;
     status: 'pending' | 'paid' | 'expired' | 'failed' | 'cancelled';
@@ -53,7 +53,7 @@ export interface BillingInvoice {
 export interface CheckoutResponse {
     subscription: BillingSubscription;
     invoice: BillingInvoice;
-    redirect_url: string;
+    redirect_url: string | null;
     qr_string: string | null;
 }
 
@@ -65,4 +65,6 @@ export interface InvoiceDetailResponse {
     /** ISO-8601 deadline pembayaran; null bila invoice tidak bisa dibayar lagi. */
     expires_at: string | null;
     can_pay: boolean;
+    /** Lama invoice berlaku (menit) — sumber tunggal dari config/billing.php. */
+    lifetime_minutes: number;
 }

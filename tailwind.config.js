@@ -21,6 +21,9 @@ module.exports = {
         extend: {
             fontFamily: {
                 header: ['"IBM Plex Sans"', '"Roboto"', 'system-ui', 'sans-serif'],
+                // DESIGN.md — font.family.primary=Outfit (adopsi sebagian, palet panel tetap)
+                sans: ['Outfit', 'system-ui', 'sans-serif'],
+                primary: ['Outfit', 'sans-serif'],
             },
             colors: {
                 black: '#131a20',
@@ -34,8 +37,21 @@ module.exports = {
             fontSize: {
                 '2xs': '0.625rem',
             },
+            // DESIGN.md — radius.xs/sm/md/lg dan shadow.1
+            borderRadius: {
+                xs: '5px',
+                sm: '6px',
+                md: '8px',
+                lg: '12px',
+            },
+            boxShadow: {
+                'ds-1': 'rgba(15, 23, 42, 0.12) 0px 12px 32px -12px',
+            },
+            // DESIGN.md — motion.duration.instant/fast/normal
             transitionDuration: {
+                150: '150ms',
                 250: '250ms',
+                300: '300ms',
             },
             borderColor: theme => ({
                 default: theme('colors.neutral.400', 'currentColor'),

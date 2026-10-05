@@ -23,15 +23,26 @@ function formatCountdown(totalSeconds: number): string {
 
 function renderQR(qr: string | null) {
     if (!qr) return null;
-    if (qr.startsWith('data:image')) return <img src={qr} alt={'QR Code'} css={tw`max-w-[240px] mx-auto rounded`} />;
-    if (qr.startsWith('http')) return <img src={qr} alt={'QR Code'} css={tw`max-w-[240px] mx-auto rounded`} />;
-    if (/^[A-Za-z0-9+/=]{100,}$/.test(qr.replace(/\s/g, '')))
-        return <img src={`data:image/png;base64,${qr}`} alt={'QR Code'} css={tw`max-w-[240px] mx-auto rounded`} />;
+    if (qr.startsWith('data:image')) {
+        return <img src={qr} alt={'QR Code pembayaran'} css={tw`max-w-[240px] mx-auto rounded-md`} />;
+    }
+    if (qr.startsWith('http')) {
+        return <img src={qr} alt={'QR Code pembayaran'} css={tw`max-w-[240px] mx-auto rounded-md`} />;
+    }
+    if (/^[A-Za-z0-9+/=]{100,}$/.test(qr.replace(/\s/g, ''))) {
+        return (
+            <img
+                src={`data:image/png;base64,${qr}`}
+                alt={'QR Code pembayaran'}
+                css={tw`max-w-[240px] mx-auto rounded-md`}
+            />
+        );
+    }
 
     return (
         <div css={tw`text-center`}>
-            <QRCode renderAs={'svg'} value={qr} size={220} css={tw`mx-auto rounded bg-white p-2`} />
-            <p css={tw`font-mono text-[10px] break-all bg-neutral-900 p-2 rounded mt-2 text-left`}>{qr}</p>
+            <QRCode renderAs={'svg'} value={qr} size={220} css={tw`mx-auto rounded-md bg-white p-2`} />
+            <p css={tw`font-mono text-xs break-all bg-neutral-900 rounded-md p-2 mt-2 text-left`}>{qr}</p>
         </div>
     );
 }
@@ -125,9 +136,13 @@ export default () => {
         return (
             <PageContentBlock title={'Invoice'}>
                 <FlashMessageRender byKey={flashKey} css={tw`mb-4`} />
-                <ContentBox>Invoice tidak ditemukan.</ContentBox>
+                <ContentBox>
+                    <p role={'status'}>Invoice tidak ditemukan.</p>
+                </ContentBox>
                 <div css={tw`mt-4`}>
-                    <Link to={'/store'} css={tw`text-cyan-400 no-underline`}>Kembali ke Store</Link>
+                    <Link to={'/store'} css={tw`text-cyan-400 no-underline`}>
+                        Kembali ke Store
+                    </Link>
                 </div>
             </PageContentBlock>
         );
@@ -137,19 +152,20 @@ export default () => {
     const paid = invoice.status === 'paid';
     const expired = invoice.status === 'expired' || (isCountdownExpired ?? false);
     const canPay = detail.can_pay && !expired;
+    const urgent = remainingSec !== null && remainingSec <= 60;
 
     return (
         <PageContentBlock title={`Invoice #${invoice.order_id}`}>
             <FlashMessageRender byKey={flashKey} css={tw`mb-4`} />
             <div css={tw`relative`}>
                 <SpinnerOverlay visible={checking} />
-                <ContentBox title={`Invoice ${invoice.order_id}`} css={tw`mb-6`}>
+                <ContentBox title={`Invoice ${invoice.order_id}`} css={tw`mb-6 rounded-md shadow-ds-1`}>
                     <div css={tw`space-y-3`}>
                         <div css={tw`grid grid-cols-2 gap-2 text-sm`}>
                             <div css={tw`text-neutral-400`}>Order ID</div>
-                            <div css={tw`font-mono`}>{invoice.order_id}</div>
+                            <div css={tw`font-mono break-all`}>{invoice.order_id}</div>
                             <div css={tw`text-neutral-400`}>Nominal</div>
-                            <div>Rp {invoice.amount_cents.toLocaleString('id-ID')}</div>
+                            <div css={tw`font-mono`}>Rp {invoice.amount_cents.toLocaleString('id-ID')}</div>
                             <div css={tw`text-neutral-400`}>Status</div>
                             <div
                                 css={[
@@ -162,16 +178,29 @@ export default () => {
                             {detail.subscription && (
                                 <>
                                     <div css={tw`text-neutral-400`}>Server</div>
-                                    <div>{detail.subscription.server?.name ?? '(akan dibuat setelah pembayaran)'}</div>
+                                    <div css={tw`break-words`}>
+                                        {detail.subscription.server?.name ?? '(akan dibuat setelah pembayaran)'}
+                                    </div>
                                 </>
                             )}
                         </div>
 
                         {canPay && remainingSec !== null && (
-                            <div css={tw`rounded bg-neutral-900 p-3 text-center`}>
-                                <p css={tw`text-xs text-neutral-500`}>Bayar sebelum countdown habis</p>
-                                <p css={tw`text-3xl font-mono font-bold text-cyan-400`}>{formatCountdown(remainingSec)}</p>
-                                <p css={tw`text-xs text-neutral-500`}>Invoice hanya berlaku 3 menit dari dibuat.</p>
+                            <div css={tw`rounded-md bg-neutral-900 p-3 text-center`}>
+                                <p css={tw`text-xs text-neutral-400`}>Bayar sebelum countdown habis</p>
+                                <p
+                                    role={'timer'}
+                                    aria-live={urgent ? 'assertive' : 'off'}
+                                    css={[
+                                        tw`text-3xl font-mono font-bold`,
+                                        urgent ? tw`text-red-400` : tw`text-cyan-400`,
+                                    ]}
+                                >
+                                    {formatCountdown(remainingSec)}
+                                </p>
+                                <p css={tw`text-xs text-neutral-400`}>
+                                    Invoice hanya berlaku {detail.lifetime_minutes ?? 3} menit dari dibuat.
+                                </p>
                             </div>
                         )}
 
@@ -182,8 +211,9 @@ export default () => {
                                 <a
                                     href={detail.redirect_url}
                                     target={'_blank'}
-                                    rel={'noreferrer'}
-                                    css={tw`block text-center bg-cyan-600 hover:bg-cyan-700 text-white py-2 rounded no-underline`}
+                                    rel={'noreferrer noopener'}
+                                    aria-label={'Buka halaman pembayaran di tab baru'}
+                                    css={tw`block text-center bg-cyan-600 hover:bg-cyan-700 active:bg-cyan-800 text-white py-2 rounded-md no-underline transition-colors duration-150 focus:outline-none focus-visible:ring-[3px] focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900`}
                                 >
                                     Buka Halaman Pembayaran
                                 </a>
@@ -194,22 +224,41 @@ export default () => {
                                 </Button>
                             )}
                             {paid && (
-                                <p css={tw`text-sm text-green-400`}>Pembayaran berhasil. Server sedang dibuat — lihat di <Link to={'/account/billing'} css={tw`text-cyan-400`}>Billing</Link>.</p>
+                                <p css={tw`text-sm text-green-400`} role={'status'}>
+                                    Pembayaran berhasil. Server sedang dibuat — lihat di{' '}
+                                    <Link to={'/account/billing'} css={tw`text-cyan-400`}>
+                                        Billing
+                                    </Link>
+                                    .
+                                </p>
                             )}
                             {expired && (
-                                <div css={tw`rounded bg-red-900/40 border border-red-800 p-3 text-sm`}>
-                                    Link invoice expired. Buat kembali dari <Link to={'/store'} css={tw`text-cyan-400`}>Store</Link>.
+                                <div
+                                    role={'alert'}
+                                    css={tw`rounded-md bg-red-900/40 border border-red-800 p-3 text-sm`}
+                                >
+                                    Link invoice expired. Buat kembali dari{' '}
+                                    <Link to={'/store'} css={tw`text-cyan-400`}>
+                                        Store
+                                    </Link>
+                                    .
                                 </div>
                             )}
                             {!canPay && !paid && !expired && (
-                                <p css={tw`text-sm text-neutral-400`}>Invoice tidak dapat dibayar lagi.</p>
+                                <p css={tw`text-sm text-neutral-400`} role={'status'}>
+                                    Invoice tidak dapat dibayar lagi.
+                                </p>
                             )}
                         </div>
                     </div>
                 </ContentBox>
                 <div css={tw`mt-4 flex gap-4`}>
-                    <Link to={'/store'} css={tw`text-cyan-400 no-underline text-sm`}>← Kembali ke Store</Link>
-                    <Link to={'/account/billing'} css={tw`text-neutral-400 no-underline text-sm`}>Lihat Billing</Link>
+                    <Link to={'/store'} css={tw`text-cyan-400 no-underline text-sm`}>
+                        ← Kembali ke Store
+                    </Link>
+                    <Link to={'/account/billing'} css={tw`text-neutral-400 no-underline text-sm`}>
+                        Lihat Billing
+                    </Link>
                 </div>
             </div>
         </PageContentBlock>

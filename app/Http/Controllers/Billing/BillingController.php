@@ -166,6 +166,7 @@ class BillingController extends Controller
             'qr_string' => $canPay ? $invoice->qr_string : null,
             'expires_at' => $canPay ? $invoice->paymentDeadline()->toIso8601String() : null,
             'can_pay' => $canPay,
+            'lifetime_minutes' => (int) config('billing.invoice_lifetime_minutes', 3),
         ]);
     }
 

@@ -75,9 +75,24 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
         >
             {({ isSubmitting, setSubmitting, submitForm }) => (
                 <LoginFormContainer title={'Login to Continue'} css={tw`w-full flex`}>
-                    <Field light type={'text'} label={'Username or Email'} name={'username'} disabled={isSubmitting} />
+                    <Field
+                        light
+                        type={'text'}
+                        label={'Username or Email'}
+                        name={'username'}
+                        autoComplete={'username'}
+                        autoFocus
+                        disabled={isSubmitting}
+                    />
                     <div css={tw`mt-6`}>
-                        <Field light type={'password'} label={'Password'} name={'password'} disabled={isSubmitting} />
+                        <Field
+                            light
+                            type={'password'}
+                            label={'Password'}
+                            name={'password'}
+                            autoComplete={'current-password'}
+                            disabled={isSubmitting}
+                        />
                     </div>
                     <div css={tw`mt-6`}>
                         <Button type={'submit'} size={'xlarge'} isLoading={isSubmitting} disabled={isSubmitting}>
@@ -103,16 +118,19 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
                         <Link
                             to={'/auth/password'}
                             style={{ color: 'var(--z0ne-text-secondary, #a1a1aa)' }}
-                            css={tw`text-xs tracking-wide no-underline hover:text-white transition-colors`}
+                            css={tw`text-xs tracking-wide no-underline hover:text-white transition-colors duration-150 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2`}
                         >
                             Forgot password?
                         </Link>
-                        <div style={{ color: 'var(--z0ne-text-muted, #71717a)' }} css={tw`text-xs mt-2 pt-2 border-t border-neutral-800`}>
-                            Don&apos;t have an account?{' '}
+                        <div
+                            style={{ color: 'var(--z0ne-text-muted, #71717a)' }}
+                            css={tw`text-xs mt-2 pt-2 border-t border-neutral-800`}
+                        >
+                            Belum punya akun?{' '}
                             <Link
-                                to={'/auth/login'}
+                                to={'/auth/register'}
                                 style={{ color: 'var(--z0ne-accent-primary, #3b82f6)' }}
-                                css={tw`font-medium no-underline hover:underline ml-1`}
+                                css={tw`font-medium no-underline hover:underline ml-1 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400`}
                             >
                                 Create Account
                             </Link>

@@ -49,21 +49,23 @@ const LoginCheckpointContainer = () => {
                 </Button>
             </div>
             <div css={tw`mt-6 text-center`}>
-                <span
+                <button
+                    type={'button'}
                     onClick={() => {
                         setFieldValue('code', '');
                         setFieldValue('recoveryCode', '');
                         setIsMissingDevice((s) => !s);
                     }}
-                    css={tw`cursor-pointer text-xs text-neutral-500 tracking-wide uppercase no-underline hover:text-neutral-700`}
+                    aria-pressed={isMissingDevice}
+                    css={tw`cursor-pointer text-xs text-neutral-400 tracking-wide uppercase bg-transparent border-0 p-0 rounded-sm hover:text-neutral-200 transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900`}
                 >
                     {!isMissingDevice ? "I've Lost My Device" : 'I Have My Device'}
-                </span>
+                </button>
             </div>
             <div css={tw`mt-6 text-center`}>
                 <Link
                     to={'/auth/login'}
-                    css={tw`text-xs text-neutral-500 tracking-wide uppercase no-underline hover:text-neutral-700`}
+                    css={tw`text-xs text-neutral-400 tracking-wide uppercase no-underline hover:text-neutral-200 transition-colors duration-150 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2`}
                 >
                     Return to Login
                 </Link>

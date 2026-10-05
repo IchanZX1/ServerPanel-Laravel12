@@ -1,6 +1,7 @@
 import React from 'react';
 import { Route, Switch, useRouteMatch } from 'react-router-dom';
 import LoginContainer from '@/components/auth/LoginContainer';
+import RegisterContainer from '@/components/auth/RegisterContainer';
 import ForgotPasswordContainer from '@/components/auth/ForgotPasswordContainer';
 import ResetPasswordContainer from '@/components/auth/ResetPasswordContainer';
 import LoginCheckpointContainer from '@/components/auth/LoginCheckpointContainer';
@@ -15,21 +16,26 @@ export default () => {
     return (
         <div
             style={{
-                background: 'radial-gradient(circle at top right, #1a1a2e 0%, #09090b 100%)',
+                // DESIGN.md — pakai semantic token, bukan raw hex.
+                background:
+                    'radial-gradient(circle at top right, var(--z0ne-auth-glow, #1a1a2e) 0%, var(--z0ne-surface-base, #09090b) 100%)',
                 minHeight: '100vh',
             }}
             className={'pt-8 xl:pt-32'}
         >
-            <Switch location={location}>
-                <Route path={`${path}/login`} component={LoginContainer} exact />
-                <Route path={`${path}/login/checkpoint`} component={LoginCheckpointContainer} />
-                <Route path={`${path}/password`} component={ForgotPasswordContainer} exact />
-                <Route path={`${path}/password/reset/:token`} component={ResetPasswordContainer} />
-                <Route path={`${path}/checkpoint`} />
-                <Route path={'*'}>
-                    <NotFound onBack={() => history.push('/auth/login')} />
-                </Route>
-            </Switch>
+            <main>
+                <Switch location={location}>
+                    <Route path={`${path}/login`} component={LoginContainer} exact />
+                    <Route path={`${path}/register`} component={RegisterContainer} exact />
+                    <Route path={`${path}/login/checkpoint`} component={LoginCheckpointContainer} />
+                    <Route path={`${path}/password`} component={ForgotPasswordContainer} exact />
+                    <Route path={`${path}/password/reset/:token`} component={ResetPasswordContainer} />
+                    <Route path={`${path}/checkpoint`} />
+                    <Route path={'*'}>
+                        <NotFound onBack={() => history.push('/auth/login')} />
+                    </Route>
+                </Switch>
+            </main>
         </div>
     );
 };
