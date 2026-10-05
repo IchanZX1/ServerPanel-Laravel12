@@ -100,10 +100,11 @@ class BillingController extends Controller
             note: "Billing #plan-{$plan->id} - {$plan->name}",
         );
 
-        $result = DB::transaction(function () use ($user, $plan, $payment) {
+        $result = DB::transaction(function () use ($user, $plan, $payment, $validated) {
             $subscription = BillingSubscription::query()->create([
                 'user_id' => $user->id,
                 'plan_id' => $plan->id,
+                'server_name' => $validated['server_name'],
                 'status' => BillingSubscription::STATUS_PENDING_PAYMENT,
             ]);
 

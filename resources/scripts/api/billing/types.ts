@@ -25,6 +25,8 @@ export interface BillingSubscription {
     id: number;
     user_id: number;
     plan_id: number;
+    /** Nama server yang diminta user saat checkout; null untuk subscription lama. */
+    server_name: string | null;
     server_id: number | null;
     status: 'pending_payment' | 'active' | 'suspended' | 'cancelled' | 'expired';
     expires_at: string | null;

@@ -13,6 +13,8 @@ import { httpErrorToHuman } from '@/api/http';
 import { useStoreState } from 'easy-peasy';
 import SubNavigation from '@/components/elements/SubNavigation';
 import InstallListener from '@/components/server/InstallListener';
+import ServerBillingBanner from '@/components/server/ServerBillingBanner';
+import ContentContainer from '@/components/elements/ContentContainer';
 import ErrorBoundary from '@/components/elements/ErrorBoundary';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
@@ -20,6 +22,7 @@ import { useLocation } from 'react-router';
 import ConflictStateRenderer from '@/components/server/ConflictStateRenderer';
 import PermissionRoute from '@/components/elements/PermissionRoute';
 import routes from '@/routers/routes';
+import tw from 'twin.macro';
 
 export default () => {
     const match = useRouteMatch<{ id: string }>();
@@ -106,6 +109,11 @@ export default () => {
                         <InstallListener />
                         <TransferListener />
                         <WebsocketHandler />
+                        {/* Banner billing realtime di atas semua tab server.
+                            Tidak render apa pun bila server tak terikat billing. */}
+                        <ContentContainer css={tw`mt-4 xl:mt-6`}>
+                            <ServerBillingBanner />
+                        </ContentContainer>
                         {inConflictState &&
                         (!rootAdmin || (rootAdmin && !location.pathname.endsWith(`/server/${id}`))) ? (
                             <ConflictStateRenderer />

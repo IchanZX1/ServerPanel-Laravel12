@@ -21,6 +21,7 @@ class BillingSubscription extends Model
     protected $fillable = [
         'user_id',
         'plan_id',
+        'server_name',
         'server_id',
         'status',
         'expires_at',

@@ -80,8 +80,15 @@ class MarkInvoicePaidJob implements ShouldQueue
 
         // Provision server baru untuk invoice initial.
         if ($invoice->type === BillingInvoice::TYPE_INITIAL && is_null($subscription->server_id)) {
-            $planName = preg_replace('/[^a-z0-9]+/i', '-', strtolower($plan->name));
-            $serverName = $subscription->user->username . '-' . trim($planName, '-') . '-' . $subscription->id;
+            // Pakai nama yang diminta user saat checkout. Fallback ke pola
+            // username-plan-id hanya untuk subscription lama yang belum punya
+            // server_name (dibuat sebelum kolom ini ada).
+            $serverName = $subscription->server_name;
+
+            if (empty($serverName)) {
+                $planName = preg_replace('/[^a-z0-9]+/i', '-', strtolower($plan->name));
+                $serverName = $subscription->user->username . '-' . trim($planName, '-') . '-' . $subscription->id;
+            }
 
             try {
                 app()->make(SubscriptionProvisionService::class)

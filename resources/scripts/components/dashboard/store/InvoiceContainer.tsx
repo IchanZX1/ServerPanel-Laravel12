@@ -243,7 +243,7 @@ export default () => {
     // Provisioning dianggap selesai hanya kalau server benar-benar terhubung ke
     // subscription. Invoice initial bisa PAID tanpa server bila provisioning gagal.
     const provisioned = detail.subscription?.server_id != null;
-    const serverName = detail.subscription?.server?.name ?? null;
+    const serverName = detail.subscription?.server?.name ?? detail.subscription?.server_name ?? null;
 
     return (
         <PageContentBlock title={`Invoice ${invoice.order_id}`}>
@@ -471,9 +471,10 @@ export default () => {
                                     </>
                                 )}
                                 <InfoRow label={'Server'}>
-                                    {detail.subscription?.server?.name ?? (
-                                        <span css={tw`text-neutral-500`}>Dibuat setelah pembayaran</span>
-                                    )}
+                                    {detail.subscription?.server?.name ??
+                                        detail.subscription?.server_name ?? (
+                                            <span css={tw`text-neutral-500`}>Dibuat setelah pembayaran</span>
+                                        )}
                                 </InfoRow>
                                 <InfoRow label={'Jenis'}>
                                     {invoice.type === 'renewal' ? 'Perpanjangan' : 'Pembelian Baru'}
