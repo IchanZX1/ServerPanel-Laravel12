@@ -6,7 +6,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Pterodactyl\Http\Controllers\Controller;
+use Pterodactyl\Jobs\Billing\MarkInvoicePaidJob;
 use Pterodactyl\Jobs\Billing\VerifyInvoicePaymentJob;
 use Pterodactyl\Models\Billing\BillingInvoice;
 use Pterodactyl\Models\Billing\BillingPlan;
@@ -116,13 +118,26 @@ class BillingController extends Controller
             return response()->json(['message' => 'Paket tidak aktif.'], 422);
         }
 
-        $gateway = app()->make(SociabuzzGatewayService::class);
-        $payment = $gateway->createPayment(
-            amount: $plan->price_cents,
-            fullname: trim(($user->name_first ?? '') . ' ' . ($user->name_last ?? '')) ?: $user->username,
-            email: $user->email,
-            note: "Billing #plan-{$plan->id} - {$plan->name}",
-        );
+        // Dev auto-paid: jangan panggil gateway sama sekali. Kalau API key
+        // lokal kosong / gateway mati, checkout tetap jalan. order_id
+        // disintesis karena kolomnya unique NOT NULL.
+        if ($this->devAutoPaidEnabled()) {
+            $payment = [
+                'order_id' => 'dev-' . Str::uuid()->toString(),
+                'inv_id' => null,
+                'redirect_url' => null,
+                'qr_string' => null,
+                'expiration_date' => null,
+            ];
+        } else {
+            $gateway = app()->make(SociabuzzGatewayService::class);
+            $payment = $gateway->createPayment(
+                amount: $plan->price_cents,
+                fullname: trim(($user->name_first ?? '') . ' ' . ($user->name_last ?? '')) ?: $user->username,
+                email: $user->email,
+                note: "Billing #plan-{$plan->id} - {$plan->name}",
+            );
+        }
 
         $result = DB::transaction(function () use ($user, $plan, $payment, $validated) {
             $subscription = BillingSubscription::query()->create([
@@ -150,6 +165,26 @@ class BillingController extends Controller
 
         [$subscription, $invoice] = $result;
 
+        // DEVELOPMENT ONLY: tandai PAID + provision langsung, tanpa gateway.
+        // Proteksi ganda (flag config DAN bukan production) — sama seperti
+        // ssl_verify_disabled. Di production blok ini tidak pernah jalan.
+        if ($this->devAutoPaidEnabled()) {
+            $invoice->update(['status' => BillingInvoice::STATUS_PAID, 'paid_at' => now()]);
+            MarkInvoicePaidJob::dispatchSync($invoice);
+
+            Log::warning('Billing: dev auto-paid aktif — invoice ditandai PAID tanpa verifikasi gateway', [
+                'invoice_id' => $invoice->id,
+                'subscription_id' => $subscription->id,
+            ]);
+
+            return response()->json([
+                'subscription' => $subscription->fresh(),
+                'invoice' => $invoice->fresh(),
+                'redirect_url' => null,
+                'qr_string' => null,
+            ], 201);
+        }
+
         // Mulai polling verify — invoice gateway expired ~3 menit.
         VerifyInvoicePaymentJob::dispatch($invoice)
             ->delay(now()->addSeconds(max((int) config('billing.poll_interval_seconds'), 10)))
@@ -161,6 +196,14 @@ class BillingController extends Controller
             'redirect_url' => $invoice->redirect_url,
             'qr_string' => $invoice->qr_string,
         ], 201);
+    }
+
+    /**
+     * Apakah auto-PAID dev boleh jalan. Selalu false di production.
+     */
+    private function devAutoPaidEnabled(): bool
+    {
+        return (bool) config('billing.dev_auto_paid') && !app()->isProduction();
     }
 
     /**

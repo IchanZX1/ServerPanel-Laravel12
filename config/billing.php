@@ -53,6 +53,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Auto-PAID saat checkout (DEVELOPMENT ONLY)
+    |--------------------------------------------------------------------------
+    |
+    | Bila true DAN app tidak production, checkout langsung menandai invoice
+    | PAID dan mem-provision server — tanpa gateway, tanpa klik
+    | "Saya Sudah Bayar". Selalu false di production: proteksi ganda seperti
+    | `ssl_verify_disabled` di bawah (flag ini DAN app()->isProduction()).
+    */
+    'dev_auto_paid' => (bool) env('BILLING_DEV_AUTO_PAID', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Bypass verifikasi SSL (DEVELOPMENT ONLY)
     |--------------------------------------------------------------------------
     |
