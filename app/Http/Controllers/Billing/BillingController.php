@@ -118,6 +118,14 @@ class BillingController extends Controller
             return response()->json(['message' => 'Paket tidak aktif.'], 422);
         }
 
+        // Registrasi publik tidak tepercaya: email harus diverifikasi dulu
+        // sebelum bisa membeli. Cegah akun massal dengan email sampah.
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Verifikasi email Anda terlebih dahulu sebelum membeli server.',
+            ], 403);
+        }
+
         // Dev auto-paid: jangan panggil gateway sama sekali. Kalau API key
         // lokal kosong / gateway mati, checkout tetap jalan. order_id
         // disintesis karena kolomnya unique NOT NULL.
@@ -308,6 +316,12 @@ class BillingController extends Controller
     {
         if ($subscription->user_id !== $request->user()->id) {
             return response()->json(['message' => 'Not found.'], 404);
+        }
+
+        if (!$request->user()->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Verifikasi email Anda terlebih dahulu sebelum memperpanjang server.',
+            ], 403);
         }
 
         if (!in_array($subscription->status, [BillingSubscription::STATUS_ACTIVE, BillingSubscription::STATUS_SUSPENDED], true)) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, RouteComponentProps } from 'react-router-dom';
+import { Link, RouteComponentProps, useLocation } from 'react-router-dom';
 import login from '@/api/auth/login';
 import LoginFormContainer from '@/components/auth/LoginFormContainer';
 import { useStoreState } from 'easy-peasy';
@@ -19,13 +19,39 @@ interface Values {
 const LoginContainer = ({ history }: RouteComponentProps) => {
     const ref = useRef<Reaptcha>(null);
     const [token, setToken] = useState('');
+    const { search } = useLocation();
 
-    const { clearFlashes, clearAndAddHttpError } = useFlash();
+    // Menandai bahwa token captcha yang sedang ditunggu memang diminta oleh
+    // form ini. reCAPTCHA invisible bisa memanggil callback widget lama setelah
+    // navigasi antar halaman auth; tanpa guard ini form login yang masih kosong
+    // ikut ter-submit dan memunculkan "A username or email must be provided".
+    const pendingCaptcha = useRef(false);
+
+    const { clearFlashes, clearAndAddHttpError, addFlash } = useFlash();
     const { enabled: recaptchaEnabled, siteKey } = useStoreState((state) => state.settings.data!.recaptcha);
 
     useEffect(() => {
         clearFlashes();
     }, []);
+
+    // Hasil klik tautan verifikasi email (VerifyEmailController redirect ke sini).
+    useEffect(() => {
+        const verified = new URLSearchParams(search).get('verified');
+
+        if (verified === '1') {
+            addFlash({
+                type: 'success',
+                title: 'Email terverifikasi',
+                message: 'Email Anda sudah terverifikasi. Silakan login.',
+            });
+        } else if (verified === '0') {
+            addFlash({
+                type: 'error',
+                title: 'Verifikasi gagal',
+                message: 'Tautan verifikasi tidak valid atau sudah kedaluwarsa. Minta tautan baru dari dashboard.',
+            });
+        }
+    }, [search]);
 
     const onSubmit = (values: Values, { setSubmitting }: FormikHelpers<Values>) => {
         clearFlashes();
@@ -33,9 +59,11 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
         // If there is no token in the state yet, request the token and then abort this submit request
         // since it will be re-submitted when the recaptcha data is returned by the component.
         if (recaptchaEnabled && !token) {
+            pendingCaptcha.current = true;
             ref.current!.execute().catch((error) => {
                 console.error(error);
 
+                pendingCaptcha.current = false;
                 setSubmitting(false);
                 clearAndAddHttpError({ error });
             });
@@ -105,10 +133,18 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
                             size={'invisible'}
                             sitekey={siteKey || '_invalid_key'}
                             onVerify={(response) => {
+                                // Callback dari widget yang sudah tidak relevan
+                                // (halaman sudah berganti) diabaikan.
+                                if (!pendingCaptcha.current) {
+                                    return;
+                                }
+
+                                pendingCaptcha.current = false;
                                 setToken(response);
                                 submitForm();
                             }}
                             onExpire={() => {
+                                pendingCaptcha.current = false;
                                 setSubmitting(false);
                                 setToken('');
                             }}

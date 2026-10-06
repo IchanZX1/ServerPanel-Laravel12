@@ -3,6 +3,7 @@
 namespace Pterodactyl\Services\Users;
 
 use Ramsey\Uuid\Uuid;
+use Carbon\CarbonImmutable;
 use Pterodactyl\Models\User;
 use Pterodactyl\Facades\Activity;
 use Illuminate\Contracts\Hashing\Hasher;
@@ -27,10 +28,14 @@ class UserCreationService
     /**
      * Create a new user on the system.
      *
+     * $verified menandai email sudah terverifikasi. Akun yang dibuat admin
+     * atau lewat CLI memang tepercaya, jadi default true. Registrasi publik
+     * memanggil dengan false supaya user harus klik tautan verifikasi dulu.
+     *
      * @throws \Exception
      * @throws \Pterodactyl\Exceptions\Model\DataValidationException
      */
-    public function handle(array $data): User
+    public function handle(array $data, bool $verified = true): User
     {
         if (array_key_exists('password', $data) && !empty($data['password'])) {
             $data['password'] = $this->hasher->make($data['password']);
@@ -45,6 +50,7 @@ class UserCreationService
         /** @var User $user */
         $user = $this->repository->create(array_merge($data, [
             'uuid' => Uuid::uuid4()->toString(),
+            'email_verified_at' => $verified ? CarbonImmutable::now() : null,
         ]), true, true);
 
         if (isset($generateResetToken)) {

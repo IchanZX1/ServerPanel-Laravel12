@@ -9,6 +9,7 @@ use Illuminate\Validation\Rules\In;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Auth\MustVerifyEmail;
 use Pterodactyl\Contracts\Models\Identifiable;
 use Pterodactyl\Models\Traits\HasAccessTokens;
 use Illuminate\Auth\Passwords\CanResetPassword;
@@ -21,6 +22,8 @@ use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
+use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
+use Pterodactyl\Notifications\VerifyEmailNotification;
 use Pterodactyl\Notifications\SendPasswordReset as ResetPasswordNotification;
 
 /**
@@ -86,7 +89,8 @@ class User extends Model implements
     AuthenticatableContract,
     AuthorizableContract,
     CanResetPasswordContract,
-    Identifiable
+    Identifiable,
+    MustVerifyEmailContract
 {
     use Authenticatable;
     use Authorizable;
@@ -94,6 +98,7 @@ class User extends Model implements
     use CanResetPassword;
     /** @use \Pterodactyl\Models\Traits\HasAccessTokens<\Pterodactyl\Models\ApiKey> */
     use HasAccessTokens;
+    use MustVerifyEmail;
     use Notifiable;
     /** @use \Illuminate\Database\Eloquent\Factories\HasFactory<\Database\Factories\UserFactory> */
     use HasFactory;
@@ -144,6 +149,7 @@ class User extends Model implements
         'use_totp' => 'boolean',
         'gravatar' => 'boolean',
         'totp_authenticated_at' => 'datetime',
+        'email_verified_at' => 'datetime',
     ];
 
     /**
@@ -199,7 +205,12 @@ class User extends Model implements
     public function toVueObject(): array
     {
         return Collection::make($this->toArray())->except(['id', 'external_id'])
-            ->merge(['identifier' => $this->identifier])
+            ->merge([
+                'identifier' => $this->identifier,
+                // Boolean eksplisit: frontend perlu tahu status verifikasi untuk
+                // menampilkan banner, tanpa membocorkan timestamp mentah.
+                'email_verified' => $this->hasVerifiedEmail(),
+            ])
             ->toArray();
     }
 
@@ -216,6 +227,14 @@ class User extends Model implements
             ->log('sending password reset email');
 
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    /**
+     * Kirim notifikasi verifikasi email. Dipakai trait MustVerifyEmail.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification());
     }
 
     /**

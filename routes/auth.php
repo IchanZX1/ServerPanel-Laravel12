@@ -50,5 +50,11 @@ Route::post('/logout', [Auth\LoginController::class, 'logout'])
     ->middleware('auth')
     ->name('auth.logout');
 
+// Verifikasi email. Signed URL wajib — tautan membawa id user + sha1(email),
+// tanda tangan mencegah orang lain memverifikasi email yang bukan miliknya.
+Route::get('/verify/{id}/{hash}', [Auth\VerifyEmailController::class, 'verify'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('auth.verification.verify');
+
 // Catch any other combinations of routes and pass them off to the React component.
 Route::fallback([Auth\LoginController::class, 'index']);

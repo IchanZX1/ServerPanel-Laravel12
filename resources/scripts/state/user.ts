@@ -8,6 +8,7 @@ export interface UserData {
     language: string;
     rootAdmin: boolean;
     useTotp: boolean;
+    emailVerified: boolean;
     createdAt: Date;
     updatedAt: Date;
 }

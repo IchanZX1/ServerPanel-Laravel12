@@ -26,6 +26,11 @@ const RegisterContainer = ({ history }: RouteComponentProps) => {
     const [token, setToken] = useState('');
     const [registered, setRegistered] = useState(false);
 
+    // Lihat catatan di LoginContainer: reCAPTCHA invisible bisa memanggil
+    // callback widget lama setelah navigasi, dan tanpa guard ini form yang
+    // baru mount (masih kosong) ikut ter-submit.
+    const pendingCaptcha = useRef(false);
+
     const { clearFlashes, addFlash, addError } = useFlash();
     const { enabled: recaptchaEnabled, siteKey } = useStoreState((state) => state.settings.data!.recaptcha);
 
@@ -35,9 +40,11 @@ const RegisterContainer = ({ history }: RouteComponentProps) => {
         // Bila recaptcha aktif tapi token belum ada, minta token dulu lalu batalkan
         // submit ini — form akan di-submit ulang saat recaptcha memanggil onVerify.
         if (recaptchaEnabled && !token) {
+            pendingCaptcha.current = true;
             captchaRef.current!.execute().catch((error) => {
                 console.error(error);
 
+                pendingCaptcha.current = false;
                 setSubmitting(false);
                 addError(httpErrorToHuman(error));
             });
@@ -190,10 +197,16 @@ const RegisterContainer = ({ history }: RouteComponentProps) => {
                             size={'invisible'}
                             sitekey={siteKey || '_invalid_key'}
                             onVerify={(response) => {
+                                if (!pendingCaptcha.current) {
+                                    return;
+                                }
+
+                                pendingCaptcha.current = false;
                                 setToken(response);
                                 submitForm();
                             }}
                             onExpire={() => {
+                                pendingCaptcha.current = false;
                                 setSubmitting(false);
                                 setToken('');
                             }}

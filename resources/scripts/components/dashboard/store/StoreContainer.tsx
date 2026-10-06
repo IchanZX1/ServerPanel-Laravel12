@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import PageContentBlock from '@/components/elements/PageContentBlock';
 import ContentBox from '@/components/elements/ContentBox';
+import EmailVerificationBanner from '@/components/elements/EmailVerificationBanner';
 import SpinnerOverlay from '@/components/elements/SpinnerOverlay';
 import FlashMessageRender from '@/components/FlashMessageRender';
 import { useFlashKey } from '@/plugins/useFlash';
@@ -54,6 +55,7 @@ export default () => {
     return (
         <PageContentBlock title={'Store'}>
             <FlashMessageRender byKey={flashKey} css={tw`mb-4`} />
+            <EmailVerificationBanner />
             <div css={tw`relative`}>
                 <SpinnerOverlay visible={loading} />
 

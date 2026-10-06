@@ -37,5 +37,11 @@ Route::get('/locales/locale.json', Base\LocaleController::class)
     ->withoutMiddleware(['auth', RequireTwoFactorAuthentication::class])
     ->where('namespace', '.*');
 
+// Kirim ulang tautan verifikasi email. Butuh login, jadi tidak bisa dipakai
+// untuk membanjiri inbox sembarang alamat. Throttle 3/menit per user.
+Route::post('/account/verify-email/resend', [\Pterodactyl\Http\Controllers\Auth\VerifyEmailController::class, 'resend'])
+    ->middleware('throttle:3,1')
+    ->name('auth.verification.resend');
+
 Route::get('/{react}', [Base\IndexController::class, 'index'])
     ->where('react', '^(?!(\/)?(api|auth|admin|daemon)).+');
