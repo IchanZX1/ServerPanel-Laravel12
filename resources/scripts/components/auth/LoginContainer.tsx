@@ -96,6 +96,12 @@ const LoginContainer = ({ history }: RouteComponentProps) => {
         <Formik
             onSubmit={onSubmit}
             initialValues={{ username: '', password: '' }}
+            // Validasi hanya saat submit. Dengan validateOnBlur bawaan Formik,
+            // klik pertama di mana pun memicu blur field username (yang
+            // autoFocus) lalu menyisipkan pesan error di bawahnya — konten
+            // bergeser di antara mousedown dan mouseup, sehingga klik ke tautan
+            // "Create Account" tidak pernah terhitung dan perlu dua kali.
+            validateOnBlur={false}
             validationSchema={object().shape({
                 username: string().required('A username or email must be provided.'),
                 password: string().required('Please enter your account password.'),

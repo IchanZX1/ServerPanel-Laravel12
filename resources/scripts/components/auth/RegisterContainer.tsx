@@ -83,6 +83,10 @@ const RegisterContainer = ({ history }: RouteComponentProps) => {
     return (
         <Formik
             onSubmit={onSubmit}
+            // Lihat catatan di LoginContainer: validasi saat blur menyisipkan
+            // pesan error dan menggeser konten tepat saat klik, sehingga tautan
+            // di bagian bawah form butuh dua kali klik.
+            validateOnBlur={false}
             initialValues={{
                 nameFirst: '',
                 nameLast: '',

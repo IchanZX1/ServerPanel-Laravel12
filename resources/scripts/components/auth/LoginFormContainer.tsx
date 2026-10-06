@@ -103,7 +103,7 @@ export default forwardRef<HTMLFormElement, Props>(({ title, ...props }, ref) => 
             style={{ color: 'var(--z0ne-text-secondary, #a1a1aa)' }}
             css={tw`text-center text-xs mt-4 break-words`}
         >
-            &copy; {new Date().getFullYear()} ServerPanel
+            &copy; {new Date().getFullYear()} ServerPanel - Chanzx CloudHost
         </p>
     </Container>
 ));
