@@ -41,11 +41,6 @@ export default createGlobalStyle`
         --grid-drift: 24s;
     }
 
-    @keyframes grid-drift {
-        from { transform: translate3d(0, 0, 0); }
-        to { transform: translate3d(var(--grid-cell), var(--grid-cell), 0); }
-    }
-
     @keyframes grid-spotlight-drift {
         0% { transform: translate3d(-12%, -8%, 0) scale(1); opacity: 0.55; }
         50% { transform: translate3d(10%, 6%, 0) scale(1.15); opacity: 0.85; }
@@ -53,9 +48,10 @@ export default createGlobalStyle`
     }
 
     /*
-     * Layer grid + spotlight.
+     * Layer spotlight. Grid digambar canvas (AnimatedGridBackground) supaya
+     * partikel bisa "hidup" di sel grid yang sama — CSS saja tidak bisa itu.
 
-     Keduanya z-index: -1 supaya berada di atas background body tapi di bawah
+     z-index: -1 supaya berada di atas background body tapi di bawah
      SEMUA konten in-flow (urutan paint: background → descendant negatif →
      background block in-flow → inline content). Pola sama dengan
      .particles-js-canvas-el di themes/pterodactyl/css. Jangan naikkan ke 0 —
@@ -65,28 +61,12 @@ export default createGlobalStyle`
      bukan background-position: animasi transform cuma compositing, sedangkan
      background-position memicu repaint satu viewport tiap frame.
      */
-    body::before,
     body::after {
         content: '';
         position: fixed;
         inset: -20%;
         z-index: -1;
         pointer-events: none;
-    }
-
-    body::before {
-        background-image:
-            repeating-linear-gradient(to right, var(--grid-line) 0 1px, transparent 1px 100%),
-            repeating-linear-gradient(to bottom, var(--grid-line) 0 1px, transparent 1px 100%);
-        background-size: var(--grid-cell) var(--grid-cell);
-        /* Grid memudar ke bawah supaya tidak bertabrakan dengan konten panjang. */
-        mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
-        -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
-        animation: grid-drift var(--grid-drift) linear infinite;
-        will-change: transform;
-    }
-
-    body::after {
         background-image: radial-gradient(
             circle at 50% 50%,
             rgba(var(--grid-glow), var(--grid-glow-opacity)) 0%,

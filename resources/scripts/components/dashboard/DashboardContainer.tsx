@@ -8,14 +8,18 @@ import useFlash from '@/plugins/useFlash';
 import { useStoreState } from 'easy-peasy';
 import { usePersistedState } from '@/plugins/usePersistedState';
 import Switch from '@/components/elements/Switch';
+import Button from '@/components/elements/Button';
 import tw from 'twin.macro';
+import { faShoppingCart } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import useSWR from 'swr';
 import { PaginatedResult } from '@/api/http';
 import Pagination from '@/components/elements/Pagination';
-import { useLocation } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 
 export default () => {
     const { search } = useLocation();
+    const history = useHistory();
     const defaultPage = Number(new URLSearchParams(search).get('page') || '1');
 
     const [page, setPage] = useState(!isNaN(defaultPage) && defaultPage > 0 ? defaultPage : 1);
@@ -76,11 +80,32 @@ export default () => {
                                 <ServerRow key={server.uuid} server={server} css={index > 0 ? tw`mt-2` : undefined} />
                             ))
                         ) : (
-                            <p css={tw`text-center text-sm text-neutral-400`}>
-                                {showOnlyAdmin
-                                    ? 'There are no other servers to display.'
-                                    : 'There are no servers associated with your account.'}
-                            </p>
+                            <div css={tw`text-center py-8`}>
+                                {showOnlyAdmin ? (
+                                    <p css={tw`text-sm text-neutral-400`}>
+                                        There are no other servers to display.
+                                    </p>
+                                ) : (
+                                    <>
+                                        <p css={tw`text-lg font-semibold text-neutral-100`}>
+                                            Kamu belum punya server
+                                        </p>
+                                        <p css={tw`text-sm text-neutral-400 mt-1`}>
+                                            Beli server game dengan harga terjangkau dan murah — aktif otomatis
+                                            setelah pembayaran.
+                                        </p>
+                                        <Button
+                                            color={'green'}
+                                            onClick={() => history.push('/store')}
+                                            css={tw`mt-4`}
+                                            aria-label={'Beli server sekarang'}
+                                        >
+                                            <FontAwesomeIcon icon={faShoppingCart} css={tw`mr-2`} />
+                                            Beli Server
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
                         )
                     }
                 </Pagination>
