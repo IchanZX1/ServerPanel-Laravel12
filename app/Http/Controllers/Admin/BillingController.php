@@ -159,22 +159,48 @@ class BillingController extends Controller
 
     public function retryProvision(\Pterodactyl\Models\Billing\BillingSubscription $subscription): RedirectResponse
     {
-        if (is_null($subscription->server_id) && $subscription->status === \Pterodactyl\Models\Billing\BillingSubscription::STATUS_ACTIVE) {
-            $paidInvoice = $subscription->invoices()->where('status', \Pterodactyl\Models\Billing\BillingInvoice::STATUS_PAID)->latest()->first();
-            if (is_null($paidInvoice)) {
-                $this->alert->danger('Tidak ada invoice PAID untuk subscription ini.')->flash();
+        // Status boleh `pending_payment`: MarkInvoicePaidJob mengembalikannya ke
+        // sana justru ketika provisioning gagal, supaya admin bisa retry di sini.
+        if (!is_null($subscription->server_id)) {
+            $this->alert->danger('Subscription ini sudah punya server.')->flash();
 
-                return redirect()->route('admin.billing.subscriptions');
-            }
+            return redirect()->route('admin.billing.subscriptions');
+        }
 
-            $serverName = $subscription->user->username . '-' . strtolower(preg_replace('/[^a-z0-9]+/i', '-', $subscription->plan->name)) . '-' . $subscription->id;
+        if (!in_array($subscription->status, [
+            \Pterodactyl\Models\Billing\BillingSubscription::STATUS_ACTIVE,
+            \Pterodactyl\Models\Billing\BillingSubscription::STATUS_PENDING_PAYMENT,
+        ], true)) {
+            $this->alert->danger('Provision ulang tidak diperlukan / subscription belum aktif.')->flash();
+
+            return redirect()->route('admin.billing.subscriptions');
+        }
+
+        $paidInvoice = $subscription->invoices()->where('status', \Pterodactyl\Models\Billing\BillingInvoice::STATUS_PAID)->latest()->first();
+        if (is_null($paidInvoice)) {
+            $this->alert->danger('Tidak ada invoice PAID untuk subscription ini.')->flash();
+
+            return redirect()->route('admin.billing.subscriptions');
+        }
+
+        // Pakai nama yang diminta user saat checkout, fallback ke pola lama.
+        $serverName = $subscription->server_name ?: $subscription->user->username . '-' . strtolower(preg_replace('/[^a-z0-9]+/i', '-', $subscription->plan->name)) . '-' . $subscription->id;
+
+        try {
             app()->make(\Pterodactyl\Services\Billing\SubscriptionProvisionService::class)
                 ->handle($subscription, $serverName);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Billing: retry provision gagal', [
+                'subscription_id' => $subscription->id,
+                'error' => $e->getMessage(),
+            ]);
 
-            $this->alert->success('Server berhasil di-provision ulang.')->flash();
-        } else {
-            $this->alert->danger('Provision ulang tidak diperlukan / subscription belum aktif.')->flash();
+            $this->alert->danger('Provision ulang gagal: ' . $e->getMessage())->flash();
+
+            return redirect()->route('admin.billing.subscriptions');
         }
+
+        $this->alert->success('Server berhasil di-provision ulang.')->flash();
 
         return redirect()->route('admin.billing.subscriptions');
     }
