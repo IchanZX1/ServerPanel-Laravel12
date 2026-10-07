@@ -28,6 +28,7 @@
                             <th>User</th>
                             <th>Sub</th>
                             <th>Order ID</th>
+                            <th>Txn ID</th>
                             <th class="text-center">Amount</th>
                             <th class="text-center">Type</th>
                             <th class="text-center">Status</th>
@@ -40,7 +41,15 @@
                                 <td>{{ optional($invoice->user)->username ?? '#' . $invoice->user_id }}</td>
                                 <td><code>{{ $invoice->subscription_id }}</code></td>
                                 <td><code>{{ $invoice->order_id }}</code></td>
-                                <td class="text-center"><code>Rp {{ number_format($invoice->amount_cents, 0, ',', '.') }}</code></td>
+                                {{-- txn_id Pakasir — dipakai admin untuk menelusuri
+                                     transaksi langsung di dashboard Pakasir. --}}
+                                <td><code>{{ $invoice->inv_id ?? '—' }}</code></td>
+                                <td class="text-center">
+                                    <code>Rp {{ number_format($invoice->amount_cents, 0, ',', '.') }}</code>
+                                    @if (!is_null($invoice->total_payment_cents) && $invoice->total_payment_cents !== $invoice->amount_cents)
+                                        <br><small class="text-muted">bayar Rp {{ number_format($invoice->total_payment_cents, 0, ',', '.') }}</small>
+                                    @endif
+                                </td>
                                 <td class="text-center">
                                     @if($invoice->type === 'renewal')
                                         <span class="label label-info">renewal</span>
@@ -63,7 +72,14 @@
                                 </td>
                                 <td>{{ $invoice->paid_at ?? '—' }}</td>
                                 <td class="text-center">
-                                    <a href="{{ $invoice->redirect_url }}" target="_blank" rel="noreferrer" class="btn btn-xs btn-default">Pay</a>
+                                    {{-- redirect_url selalu null sejak migrasi ke QRIS —
+                                         tanpa guard ini tautannya jadi href="" yang
+                                         menunjuk ke halaman ini sendiri. --}}
+                                    @if ($invoice->redirect_url)
+                                        <a href="{{ $invoice->redirect_url }}" target="_blank" rel="noreferrer" class="btn btn-xs btn-default">Pay</a>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

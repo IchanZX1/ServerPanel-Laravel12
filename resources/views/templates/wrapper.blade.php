@@ -46,5 +46,7 @@
         @section('scripts')
             {!! $asset->js('main.js') !!}
         @show
+
+        @include('partials.sociabuzz')
     </body>
 </html>

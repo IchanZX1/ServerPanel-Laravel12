@@ -13,7 +13,7 @@ use Pterodactyl\Jobs\Billing\VerifyInvoicePaymentJob;
 use Pterodactyl\Models\Billing\BillingInvoice;
 use Pterodactyl\Models\Billing\BillingPlan;
 use Pterodactyl\Models\Billing\BillingSubscription;
-use Pterodactyl\Services\Billing\SociabuzzGatewayService;
+use Pterodactyl\Services\Billing\PakasirGatewayService;
 
 class BillingController extends Controller
 {
@@ -126,28 +126,34 @@ class BillingController extends Controller
             ], 403);
         }
 
+        // order_id harus ada SEBELUM panggilan gateway: Pakasir menaruhnya di
+        // path URL. UUID dipakai karena aman untuk path, unik, dan tidak pernah
+        // dipakai ulang — penting karena create-transaction bersifat
+        // find-or-create: order_id yang diulang dengan body berbeda berperilaku
+        // tidak terdefinisi di sisi gateway.
+        $orderId = 'SP-' . Str::uuid()->toString();
+
         // Dev auto-paid: jangan panggil gateway sama sekali. Kalau API key
-        // lokal kosong / gateway mati, checkout tetap jalan. order_id
-        // disintesis karena kolomnya unique NOT NULL.
+        // lokal kosong / gateway mati, checkout tetap jalan.
         if ($this->devAutoPaidEnabled()) {
+            $orderId = 'dev-' . Str::uuid()->toString();
             $payment = [
-                'order_id' => 'dev-' . Str::uuid()->toString(),
-                'inv_id' => null,
-                'redirect_url' => null,
+                'txn_id' => null,
                 'qr_string' => null,
-                'expiration_date' => null,
+                'expired_at' => null,
+                'total_payment' => $plan->price_cents,
+                'fee' => null,
+                'is_sandbox' => null,
             ];
         } else {
-            $gateway = app()->make(SociabuzzGatewayService::class);
-            $payment = $gateway->createPayment(
+            $gateway = app()->make(PakasirGatewayService::class);
+            $payment = $gateway->createQrisTransaction(
                 amount: $plan->price_cents,
-                fullname: trim(($user->name_first ?? '') . ' ' . ($user->name_last ?? '')) ?: $user->username,
-                email: $user->email,
-                note: "Billing #plan-{$plan->id} - {$plan->name}",
+                orderId: $orderId,
             );
         }
 
-        $result = DB::transaction(function () use ($user, $plan, $payment, $validated) {
+        $result = DB::transaction(function () use ($user, $plan, $payment, $validated, $orderId) {
             $subscription = BillingSubscription::query()->create([
                 'user_id' => $user->id,
                 'plan_id' => $plan->id,
@@ -158,12 +164,15 @@ class BillingController extends Controller
             $invoice = BillingInvoice::query()->create([
                 'subscription_id' => $subscription->id,
                 'user_id' => $user->id,
-                'order_id' => $payment['order_id'],
-                'inv_id' => $payment['inv_id'] ?? null,
+                'order_id' => $orderId,
+                'inv_id' => $payment['txn_id'] ?? null,
                 'amount_cents' => $plan->price_cents,
-                'redirect_url' => $payment['redirect_url'],
+                'total_payment_cents' => $payment['total_payment'] ?? $plan->price_cents,
+                // QRIS tidak punya halaman pembayaran; QR dirender panel dari
+                // qr_string. Kolom ini dibiarkan null secara sengaja.
+                'redirect_url' => null,
                 'qr_string' => $payment['qr_string'] ?? null,
-                'gateway_expires_at' => SociabuzzGatewayService::parseExpiry($payment['expiration_date'] ?? null),
+                'gateway_expires_at' => PakasirGatewayService::parseExpiry($payment['expired_at'] ?? null),
                 'status' => BillingInvoice::STATUS_PENDING,
                 'type' => BillingInvoice::TYPE_INITIAL,
             ]);
@@ -193,7 +202,10 @@ class BillingController extends Controller
             ], 201);
         }
 
-        // Mulai polling verify — invoice gateway expired ~3 menit.
+        // Jaring pengaman: scheduler `billing:verify-pending` yang mem-poll tiap
+        // menit, webhook yang menangani mayoritas pembayaran. Dispatch di sini
+        // hanya relevan kalau ada queue worker — pada QUEUE_CONNECTION=sync
+        // delay() diabaikan dan job jalan inline.
         VerifyInvoicePaymentJob::dispatch($invoice)
             ->delay(now()->addSeconds(max((int) config('billing.poll_interval_seconds'), 10)))
             ->onQueue('billing');
@@ -236,6 +248,17 @@ class BillingController extends Controller
 
         $canPay = $invoice->isPending() && !$expired;
 
+        // Sisa waktu dihitung dari deadline sebenarnya, bukan dari konstanta
+        // config: batas bayar datang dari Pakasir (QRIS bisa berlaku berjam-jam),
+        // jadi countdown di panel harus mencerminkan umur QR yang sebenarnya.
+        // Aritmetika timestamp langsung, bukan diffInSeconds() — semantik tanda
+        // method itu berbeda antara Carbon 2 dan 3.
+        $lifetimeMinutes = (int) config('billing.invoice_lifetime_minutes', 3);
+        if ($canPay) {
+            $remainingSeconds = $invoice->paymentDeadline()->getTimestamp() - now()->getTimestamp();
+            $lifetimeMinutes = max(1, (int) ceil($remainingSeconds / 60));
+        }
+
         return response()->json([
             'invoice' => $invoice,
             'subscription' => $invoice->subscription()->with(['plan', 'server'])->first(),
@@ -243,7 +266,7 @@ class BillingController extends Controller
             'qr_string' => $canPay ? $invoice->qr_string : null,
             'expires_at' => $canPay ? $invoice->paymentDeadline()->toIso8601String() : null,
             'can_pay' => $canPay,
-            'lifetime_minutes' => (int) config('billing.invoice_lifetime_minutes', 3),
+            'lifetime_minutes' => $lifetimeMinutes,
         ]);
     }
 
@@ -340,23 +363,25 @@ class BillingController extends Controller
         $user = $request->user();
         $plan = $subscription->plan()->firstOrFail();
 
-        $gateway = app()->make(SociabuzzGatewayService::class);
-        $payment = $gateway->createPayment(
+        $orderId = 'SP-' . Str::uuid()->toString();
+
+        $gateway = app()->make(PakasirGatewayService::class);
+        $payment = $gateway->createQrisTransaction(
             amount: $plan->price_cents,
-            fullname: trim(($user->name_first ?? '') . ' ' . ($user->name_last ?? '')) ?: $user->username,
-            email: $user->email,
-            note: "Renewal #{$subscription->id} - {$plan->name}",
+            orderId: $orderId,
         );
 
         $invoice = BillingInvoice::query()->create([
             'subscription_id' => $subscription->id,
             'user_id' => $user->id,
-            'order_id' => $payment['order_id'],
-            'inv_id' => $payment['inv_id'] ?? null,
+            'order_id' => $orderId,
+            'inv_id' => $payment['txn_id'] ?? null,
             'amount_cents' => $plan->price_cents,
-            'redirect_url' => $payment['redirect_url'],
+            'total_payment_cents' => $payment['total_payment'] ?? $plan->price_cents,
+            // QRIS tidak punya halaman pembayaran; lihat catatan di checkout().
+            'redirect_url' => null,
             'qr_string' => $payment['qr_string'] ?? null,
-            'gateway_expires_at' => SociabuzzGatewayService::parseExpiry($payment['expiration_date'] ?? null),
+            'gateway_expires_at' => PakasirGatewayService::parseExpiry($payment['expired_at'] ?? null),
             'status' => BillingInvoice::STATUS_PENDING,
             'type' => BillingInvoice::TYPE_RENEWAL,
         ]);

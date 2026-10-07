@@ -63,6 +63,17 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('/api/remote')
                 ->scopeBindings()
                 ->group(base_path('routes/api-remote.php'));
+
+            // Webhook payment gateway: publik, TANPA session dan TANPA CSRF.
+            // Sengaja di luar grup `web` supaya VerifyCsrfToken tidak menolak
+            // POST dari gateway (419) dan StartSession tidak menulis file
+            // session untuk tiap callback. Autentikasi lewat header X-Secret,
+            // diverifikasi di controller. Throttle longgar sebagai jaring
+            // pengaman; jangan terlalu ketat atau retry gateway sendiri yang
+            // akan kena 429.
+            Route::middleware('throttle:60,1')
+                ->prefix('/billing/webhook')
+                ->group(base_path('routes/billing-webhook.php'));
         });
     }
 

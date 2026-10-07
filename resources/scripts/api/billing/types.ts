@@ -45,6 +45,8 @@ export interface BillingInvoice {
     order_id: string;
     inv_id: string | null;
     amount_cents: number;
+    /** Nominal yang harus dibayar pembeli (amount + biaya layanan gateway). */
+    total_payment_cents: number | null;
     redirect_url: string | null;
     qr_string: string | null;
     gateway_expires_at: string | null;
@@ -69,6 +71,9 @@ export interface InvoiceDetailResponse {
     /** ISO-8601 deadline pembayaran; null bila invoice tidak bisa dibayar lagi. */
     expires_at: string | null;
     can_pay: boolean;
-    /** Lama invoice berlaku (menit) — sumber tunggal dari config/billing.php. */
+    /**
+     * Sisa waktu berlaku invoice dalam menit, dihitung server dari deadline
+     * sebenarnya (gateway_expires_at Pakasir) — bukan konstanta config.
+     */
     lifetime_minutes: number;
 }

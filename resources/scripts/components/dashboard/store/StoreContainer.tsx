@@ -43,7 +43,7 @@ export default () => {
         clearFlashes();
         checkout(selectedPlan.id, serverName.trim())
             .then((data) => {
-                // Invoice punya halaman sendiri dengan countdown 3 menit.
+                // Invoice punya halaman sendiri dengan QR + countdown.
                 history.push(`/store/invoice/${data.invoice.id}`);
             })
             .catch(clearAndAddHttpError)
@@ -142,7 +142,8 @@ export default () => {
                         </p>
                     )}
                     <p css={tw`text-neutral-400 text-xs mt-2`}>
-                        Invoice berlaku 3 menit. Server dibuat otomatis setelah pembayaran terverifikasi.
+                        Sisa waktu pembayaran tampil di halaman invoice. Server dibuat otomatis setelah pembayaran
+                        terverifikasi.
                     </p>
                     <Dialog.Footer>
                         <Button.Text type={'button'} onClick={() => setSelectedPlan(null)} disabled={submitting}>

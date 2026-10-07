@@ -25,6 +25,7 @@ class BillingInvoice extends Model
         'order_id',
         'inv_id',
         'amount_cents',
+        'total_payment_cents',
         'redirect_url',
         'qr_string',
         'gateway_expires_at',
@@ -35,6 +36,7 @@ class BillingInvoice extends Model
 
     protected $casts = [
         'amount_cents' => 'integer',
+        'total_payment_cents' => 'integer',
         'gateway_expires_at' => 'datetime',
         'paid_at' => 'datetime',
     ];
@@ -76,8 +78,18 @@ class BillingInvoice extends Model
     }
 
     /**
-     * Bersihkan payload pembayaran (QR + redirect_url) setelah invoice
-     * tidak lagi bisa dibayar. Ledger tetap utuh untuk audit.
+     * Bersihkan payload pembayaran setelah invoice tidak lagi bisa dibayar.
+     * Ledger tetap utuh untuk audit.
+     *
+     * `qr_string` di sini load-bearing, bukan sekadar housekeeping:
+     * VerifyInvoicePaymentJob memakainya sebagai penanda "invoice sudah mati"
+     * (pengganti `redirect_url`, yang selalu null karena QRIS tidak punya
+     * halaman pembayaran). Jangan berhenti mengosongkannya tanpa memindahkan
+     * penanda itu juga.
+     *
+     * `inv_id` (txn_id gateway) SENGAJA tidak dikosongkan — dipakai admin untuk
+     * menelusuri transaksi di dashboard Pakasir dan oleh `billing:check` untuk
+     * memulihkan invoice yang ternyata sudah dibayar.
      */
     public function clearPaymentPayload(): void
     {

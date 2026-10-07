@@ -29,8 +29,12 @@ class UserCreationService
      * Create a new user on the system.
      *
      * $verified menandai email sudah terverifikasi. Akun yang dibuat admin
-     * atau lewat CLI memang tepercaya, jadi default true. Registrasi publik
-     * memanggil dengan false supaya user harus klik tautan verifikasi dulu.
+     * atau lewat CLI memang tepercaya, jadi default true.
+     *
+     * Registrasi publik sekarang juga memakai default ini karena verifikasi
+     * email dimatikan — lihat docblock RegisterController untuk alasan dan
+     * langkah mengaktifkannya kembali. Hanya caller yang secara eksplisit
+     * mengirim false yang menghasilkan akun belum terverifikasi.
      *
      * @throws \Exception
      * @throws \Pterodactyl\Exceptions\Model\DataValidationException

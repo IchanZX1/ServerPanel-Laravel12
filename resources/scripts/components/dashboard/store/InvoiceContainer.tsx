@@ -28,6 +28,12 @@ import { InvoiceDetailResponse } from '@/api/billing/types';
 const RING_RADIUS = 26;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
+/**
+ * Interval auto-poll status pembayaran. Cukup jarang untuk tidak membebani API,
+ * cukup sering untuk terasa "hidup" setelah pembeli selesai scan.
+ */
+const POLL_INTERVAL_MS = 5000;
+
 function formatClock(totalSeconds: number): string {
     const s = Math.max(0, Math.floor(totalSeconds));
     const m = Math.floor(s / 60);
@@ -48,7 +54,7 @@ function formatRupiah(value: number): string {
 /**
  * Render QR pembayaran. String mentah payload TIDAK pernah ditampilkan —
  * kalau gateway mengirim payload non-gambar yang tidak bisa dirender,
- * tampilkan info bahwa QR tidak tersedia dan arahkan ke halaman gateway.
+ * tampilkan info bahwa QR tidak tersedia.
  */
 function PaymentQR({ value }: { value: string | null }) {
     if (!value) {
@@ -59,7 +65,7 @@ function PaymentQR({ value }: { value: string | null }) {
             >
                 <FontAwesomeIcon icon={faQrcode} aria-hidden={'true'} css={tw`w-8 h-8 text-neutral-600`} />
                 <p css={tw`text-xs text-neutral-400 text-center px-4`}>
-                    QR tidak tersedia. Gunakan tombol halaman pembayaran.
+                    QR tidak tersedia. Hubungi admin untuk menyelesaikan pembayaran.
                 </p>
             </div>
         );
@@ -148,6 +154,22 @@ export default () => {
         }
     };
 
+    // refresh() versi diam: dipakai auto-poll supaya kegagalan sesaat (jaringan
+    // putus, 500 sesaat) tidak memunculkan flash error tiap 5 detik di layar
+    // pembeli yang sedang menunggu pembayaran.
+    const refreshQuietly = async () => {
+        if (!Number.isFinite(id)) return;
+
+        try {
+            const data = await getInvoiceDetail(id);
+            setDetail(data);
+        } catch (err) {
+            // sengaja diabaikan — countdown dan tombol manual tetap jadi jalur utama
+        } finally {
+            loadedRef.current = true;
+        }
+    };
+
     useEffect(() => {
         setLoading(true);
         refresh();
@@ -166,6 +188,28 @@ export default () => {
     const remainingSec =
         detail?.can_pay && expiresAtMs !== null ? Math.max(0, Math.floor((expiresAtMs - nowMs) / 1000)) : null;
     const isCountdownExpired = remainingSec !== null && remainingSec <= 0;
+
+    // Status pembayaran berubah dari sisi gateway (webhook Pakasir), bukan dari
+    // aksi user di halaman ini. Tanpa auto-poll, pembeli yang sudah scan dan
+    // bayar tetap melihat "Menunggu Pembayaran" sampai dia menekan tombol
+    // manual — persis saat dia paling tidak sabar.
+    const shouldPoll = detail?.can_pay === true && detail.invoice.status === 'pending' && !isCountdownExpired;
+
+    useEffect(() => {
+        if (!shouldPoll) return;
+
+        const t = window.setInterval(() => {
+            // Tab yang ditinggal tidak perlu memanggil API; tick berikutnya
+            // langsung menyusul begitu tab terlihat lagi.
+            if (document.visibilityState !== 'visible') return;
+            refreshQuietly();
+        }, POLL_INTERVAL_MS);
+
+        // Bersihkan saat unmount ATAU saat shouldPoll berubah jadi false
+        // (invoice lunas/kedaluwarsa) — tanpa ini polling terus jalan selamanya.
+        return () => window.clearInterval(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [shouldPoll, invoiceId]);
 
     // Deadline lewat -> fetch ulang sekali supaya status + pembersihan payload sinkron.
     useEffect(() => {
@@ -329,8 +373,8 @@ export default () => {
                                                 Scan QR di bawah dengan aplikasi pembayaran Anda.
                                             </p>
                                             <p css={tw`text-xs text-neutral-500`}>
-                                                Bayar sebelum pukul {formatTime(detail.expires_at)}. Invoice berlaku{' '}
-                                                {detail.lifetime_minutes ?? 3} menit sejak dibuat.
+                                                Bayar sebelum pukul {formatTime(detail.expires_at)}. Sisa waktu{' '}
+                                                {detail.lifetime_minutes ?? 3} menit.
                                             </p>
                                         </div>
                                     </div>
@@ -339,13 +383,18 @@ export default () => {
                                         <PaymentQR value={detail.qr_string} />
                                     </div>
 
-                                    <div css={tw`flex items-center gap-3 my-6`} aria-hidden={'true'}>
-                                        <span css={tw`flex-1 h-px bg-neutral-800`} />
-                                        <span css={tw`text-2xs uppercase tracking-wide text-neutral-500`}>atau</span>
-                                        <span css={tw`flex-1 h-px bg-neutral-800`} />
-                                    </div>
+                                    {/* Pemisah ikut syarat yang sama dengan tombolnya —
+                                        QRIS tidak punya redirect_url, jadi tanpa ini
+                                        "atau" menggantung tanpa apa pun di bawahnya. */}
+                                    {detail.redirect_url && (
+                                        <div css={tw`flex items-center gap-3 my-6`} aria-hidden={'true'}>
+                                            <span css={tw`flex-1 h-px bg-neutral-800`} />
+                                            <span css={tw`text-2xs uppercase tracking-wide text-neutral-500`}>atau</span>
+                                            <span css={tw`flex-1 h-px bg-neutral-800`} />
+                                        </div>
+                                    )}
 
-                                    <div css={tw`flex flex-col gap-3`}>
+                                    <div css={tw`flex flex-col gap-3 mt-6`}>
                                         {detail.redirect_url && (
                                             <a
                                                 href={detail.redirect_url}
@@ -445,10 +494,26 @@ export default () => {
                         </header>
 
                         <div css={tw`px-5 py-5`}>
+                            {/* Yang di-scan pembeli adalah total_payment (harga + biaya
+                                layanan gateway), bukan amount_cents (pendapatan kita).
+                                Menampilkan amount_cents di sini membuat angka di layar
+                                beda dengan angka di aplikasi pembayaran mereka. */}
                             <p css={tw`text-2xs uppercase tracking-wide text-neutral-500 mb-1`}>Total Tagihan</p>
                             <p css={tw`text-3xl font-bold font-mono text-cyan-400 mb-6`}>
-                                {formatRupiah(invoice.amount_cents)}
+                                {formatRupiah(invoice.total_payment_cents ?? invoice.amount_cents)}
                             </p>
+                            {(invoice.total_payment_cents ?? invoice.amount_cents) !== invoice.amount_cents && (
+                                <dl css={tw`m-0 mb-6 -mt-4`}>
+                                    <InfoRow label={'Harga paket'}>
+                                        <span css={tw`font-mono`}>{formatRupiah(invoice.amount_cents)}</span>
+                                    </InfoRow>
+                                    <InfoRow label={'Biaya layanan'}>
+                                        <span css={tw`font-mono`}>
+                                            {formatRupiah((invoice.total_payment_cents ?? 0) - invoice.amount_cents)}
+                                        </span>
+                                    </InfoRow>
+                                </dl>
+                            )}
 
                             <dl css={tw`m-0`}>
                                 <InfoRow label={'Order ID'}>

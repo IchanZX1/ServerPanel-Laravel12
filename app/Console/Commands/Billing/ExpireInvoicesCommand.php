@@ -6,8 +6,12 @@ use Illuminate\Console\Command;
 use Pterodactyl\Models\Billing\BillingInvoice;
 
 /**
- * Expire invoice pending yang lewat deadline (halaman invoice 3 menit)
- * dan bersihkan payload pembayarannya (qr_string + redirect_url).
+ * Expire invoice pending yang lewat deadline dan bersihkan payload
+ * pembayarannya (qr_string + redirect_url).
+ *
+ * Deadline utamanya datang dari gateway (`gateway_expires_at`, umur QR yang
+ * sebenarnya). `invoice_lifetime_minutes` hanya fallback untuk invoice yang
+ * tidak mendapat `expired_at` dari Pakasir.
  */
 class ExpireInvoicesCommand extends Command
 {
