@@ -149,7 +149,7 @@ class PakasirGatewayService
         $response = Http::acceptJson()
             ->withOptions($this->sslOptions())
             ->withHeaders($this->headers())
-            ->get($this->endpoint('transaction-status/' . rawurlencode($txnId)));
+            ->get($this->endpoint('transaction-status', $txnId));
 
         if (!$response->successful()) {
             throw new DisplayException(sprintf(
@@ -239,8 +239,17 @@ class PakasirGatewayService
     }
 
     /**
-     * Bangun URL endpoint. Urutan segmennya /{path}/{slug}/{suffix} — slug
-     * proyek selalu di tengah, jadi juga divalidasi di sini.
+     * Bangun URL endpoint.
+     *
+     * Polanya /{path}/{slug}/{suffix} — slug proyek selalu di tengah, jadi juga
+     * divalidasi di sini.
+     *
+     * PENTING: `$path` TIDAK boleh mengandung '/'. Dokumentasi Pakasir menulis
+     * endpoint status sebagai `transaction-status/{slug}/{txn_id}` sehingga
+     * menggoda untuk dioper sebagai satu string path — itu menghasilkan
+     * `/transaction-status/{txn_id}/{slug}`, slug dan txn_id tertukar, dan API
+     * membalas 404. Akibatnya cek status SELALU gagal dan invoice tidak pernah
+     * menjadi PAID walau pembayaran sudah completed. Oper txn_id lewat `$suffix`.
      *
      * @throws DisplayException
      */
@@ -250,6 +259,13 @@ class PakasirGatewayService
 
         if (empty($slug)) {
             throw new DisplayException('PAKASIR_SLUG belum diset di environment variables.');
+        }
+
+        if (str_contains($path, '/')) {
+            throw new DisplayException(sprintf(
+                '[Pakasir] Bug internal: $path "%s" mengandung "/". Segmen yang mengikuti slug harus lewat $suffix, kalau tidak slug dan txn_id akan tertukar.',
+                $path
+            ));
         }
 
         $url = rtrim((string) config('billing.pakasir.base_url'), '/')
