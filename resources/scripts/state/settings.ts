@@ -3,6 +3,8 @@ import { action, Action } from 'easy-peasy';
 export interface SiteSettings {
     name: string;
     locale: string;
+    /** Versi panel dari `config('app.version')`; dipakai footer Store (brief-3). */
+    version?: string;
     recaptcha: {
         enabled: boolean;
         siteKey: string;

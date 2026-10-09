@@ -1,18 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faBars,
-    faCogs,
-    faLayerGroup,
-    faSignOutAlt,
-    faShoppingCart,
-    faTimes,
-    faUser,
-} from '@fortawesome/free-solid-svg-icons';
 import { useStoreState } from 'easy-peasy';
 import { ApplicationStore } from '@/state';
 import SearchContainer from '@/components/dashboard/search/SearchContainer';
+import MaterialIcon from '@/components/elements/MaterialIcon';
 import tw, { theme } from 'twin.macro';
 import styled from 'styled-components/macro';
 import http from '@/api/http';
@@ -25,6 +16,12 @@ import logo from '@/assets/images/pterodactyl.svg';
 interface Props {
     /** Tab kontekstual (mis. daftar halaman /account atau /server/:id) yang tampil di dalam sidebar. */
     subNavigation?: React.ReactNode;
+    /**
+     * Nama node cluster yang menaungi server aktif. Hanya terisi dari ServerRouter
+     * (di sana ServerContext tersedia); DashboardRouter tidak mengirimnya, sehingga
+     * header jatuh ke nama panel.
+     */
+    node?: string | null;
 }
 
 /**
@@ -41,8 +38,15 @@ const NavList = styled.div`
     & > .navigation-link {
         ${tw`flex items-center w-full px-4 py-2.5 rounded-md text-sm font-medium text-left text-neutral-300 no-underline bg-transparent border-0 cursor-pointer transition-colors duration-150`};
 
-        & > svg {
-            ${tw`w-4 h-4 mr-3 flex-shrink-0`};
+        & > svg,
+        /*
+         * MaterialIcon merender <span>, bukan <svg> — tanpa selektor ini ikon
+         * sidebar kehilangan ukuran & jarak dan barisnya jadi tidak sejajar
+         * dengan teks. Ukuran ditulis sebagai font-size karena glyph ligature
+         * diskalakan lewat font-size, bukan width/height.
+         */
+        & > .material-symbols-outlined {
+            ${tw`text-[1rem] leading-none mr-3 flex-shrink-0`};
         }
 
         &:hover {
@@ -65,6 +69,22 @@ const NavItem = styled(NavLink)`
     }
 `;
 
+/**
+ * Top header cluster (PRD: "header cluster node (SG-01)").
+ *
+ * Terpisah dari sidebar supaya node aktif tetap terlihat saat sidebar
+ * tersembunyi di bawah breakpoint xl. Label node diambil dari
+ * ServerContext lewat prop `node` — tidak ada string cluster yang
+ * di-hardcode, karena nama node berasal dari tabel `nodes` di DB.
+ */
+const TopHeader = styled.header`
+    ${tw`sticky top-0 z-30 flex items-center justify-between h-14 px-4 bg-neutral-900 border-b border-neutral-800`};
+`;
+
+const ClusterBadge = styled.span`
+    ${tw`inline-flex items-center gap-2 px-2.5 py-1 rounded-xs bg-neutral-800 border border-neutral-700 text-2xs font-mono text-neutral-300`};
+`;
+
 // Catatan: JANGAN pakai utility translate Twin (`-translate-x-full`) di sini.
 // Tailwind v2 memisahkan `--tw-translate-x` dari `--tw-transform`, dan `tw`-macro
 // tidak memancarkan definisi `--tw-transform`, sehingga transform-nya jadi tidak
@@ -82,7 +102,7 @@ const Sidebar = styled.nav<{ $open: boolean }>`
     ${(props) => props.$open && 'transform: translateX(0);'};
 `;
 
-const AppShell: React.FC<Props> = ({ subNavigation, children }) => {
+const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
     const name = useStoreState((state: ApplicationStore) => state.settings.data!.name);
     const rootAdmin = useStoreState((state: ApplicationStore) => state.user.data!.rootAdmin);
 
@@ -137,9 +157,8 @@ const AppShell: React.FC<Props> = ({ subNavigation, children }) => {
                 onClick={() => setOpen((value) => !value)}
                 css={tw`xl:hidden fixed top-3 left-3 z-50 flex items-center justify-center w-10 h-10 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-200 shadow-ds-1 transition-colors duration-150 hover:text-white hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400`}
             >
-                <FontAwesomeIcon icon={open ? faTimes : faBars} aria-hidden={'true'} />
+                <MaterialIcon name={open ? 'close' : 'menu'} size={20} />
             </button>
-
             {open && (
                 <div
                     aria-hidden={'true'}
@@ -162,20 +181,20 @@ const AppShell: React.FC<Props> = ({ subNavigation, children }) => {
                 <div css={tw`flex-1 flex flex-col overflow-y-auto py-4`}>
                     <NavList>
                         <NavItem to={'/'} exact>
-                            <FontAwesomeIcon icon={faLayerGroup} aria-hidden={'true'} />
+                            <MaterialIcon name={'layers'} size={20} />
                             Dashboard
                         </NavItem>
                         <NavItem to={'/store'} exact>
-                            <FontAwesomeIcon icon={faShoppingCart} aria-hidden={'true'} />
+                            <MaterialIcon name={'shopping_cart'} size={20} />
                             Store
                         </NavItem>
                         <NavItem to={'/account'}>
-                            <FontAwesomeIcon icon={faUser} aria-hidden={'true'} />
+                            <MaterialIcon name={'account_circle'} size={20} />
                             Account Settings
                         </NavItem>
                         {rootAdmin && (
                             <a href={'/admin'} rel={'noreferrer'}>
-                                <FontAwesomeIcon icon={faCogs} aria-hidden={'true'} />
+                                <MaterialIcon name={'settings'} size={20} />
                                 Admin Panel
                             </a>
                         )}
@@ -187,7 +206,7 @@ const AppShell: React.FC<Props> = ({ subNavigation, children }) => {
 
                 <NavList css={tw`py-3 border-t border-neutral-800 flex-shrink-0`}>
                     <button type={'button'} onClick={onTriggerLogout}>
-                        <FontAwesomeIcon icon={faSignOutAlt} aria-hidden={'true'} />
+                        <MaterialIcon name={'logout'} size={20} />
                         Sign Out
                     </button>
                 </NavList>
@@ -195,7 +214,34 @@ const AppShell: React.FC<Props> = ({ subNavigation, children }) => {
 
             {/* pt-14 di mobile memberi ruang untuk tombol hamburger yang fixed. */}
             <div css={tw`min-h-screen flex flex-col xl:pl-64`}>
-                <div css={tw`flex-1 flex flex-col pt-14 xl:pt-0`}>{children}</div>
+                {/*
+                 * pl-16 di mobile menghindari tombol hamburger yang fixed di kiri atas.
+                 * Label kiri berganti makna: di halaman server (node diketahui dari
+                 * ServerContext) menampilkan node cluster, di halaman lain menampilkan
+                 * nama panel dari settings — supaya header tidak pernah kosong.
+                 */}
+                <TopHeader css={tw`pl-16 xl:pl-4`}>
+                    <div css={tw`flex items-center gap-3 min-w-0`}>
+                        <span css={tw`text-2xs uppercase tracking-wider text-neutral-500 font-medium flex-shrink-0`}>
+                            {node ? 'Cluster' : 'Panel'}
+                        </span>
+                        <ClusterBadge
+                            title={node ? `Node aktif: ${node}` : 'Node aktif muncul saat kamu membuka sebuah server'}
+                        >
+                            <span
+                                aria-hidden={'true'}
+                                css={
+                                    node
+                                        ? tw`w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0`
+                                        : tw`w-1.5 h-1.5 rounded-full bg-neutral-600 flex-shrink-0`
+                                }
+                            />
+                            <span css={tw`truncate max-w-[12rem]`}>{node || name}</span>
+                        </ClusterBadge>
+                    </div>
+                </TopHeader>
+
+                <div css={tw`flex-1 flex flex-col`}>{children}</div>
             </div>
         </>
     );

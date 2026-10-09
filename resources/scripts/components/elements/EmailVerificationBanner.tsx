@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faEnvelopeOpenText } from '@fortawesome/free-solid-svg-icons';
 import { useStoreState } from 'easy-peasy';
 import tw from 'twin.macro';
 import Spinner from '@/components/elements/Spinner';
+import MaterialIcon from '@/components/elements/MaterialIcon';
 import resendVerification from '@/api/account/resendVerification';
 import { ApplicationStore } from '@/state';
 
@@ -36,32 +35,56 @@ export default () => {
     return (
         <div
             role={'alert'}
-            css={tw`flex flex-col sm:flex-row sm:items-center gap-3 p-3 mb-4 rounded-md border border-yellow-600 bg-yellow-500 bg-opacity-10`}
+            css={tw`relative overflow-hidden rounded-xl bg-warning-bg p-4 shadow-sm`}
         >
-            <FontAwesomeIcon icon={faEnvelopeOpenText} css={tw`text-yellow-400 flex-shrink-0`} aria-hidden={'true'} />
-            <div css={tw`flex-1 text-sm`}>
-                {sent ? (
-                    <p css={tw`text-yellow-200`}>
-                        <FontAwesomeIcon icon={faCheckCircle} css={tw`mr-2`} aria-hidden={'true'} />
-                        Tautan verifikasi sudah dikirim ulang ke <strong>{email}</strong>. Cek inbox Anda.
-                    </p>
-                ) : (
-                    <p css={tw`text-yellow-200`}>
-                        Email <strong>{email}</strong> belum diverifikasi. Verifikasi diperlukan sebelum bisa membeli
-                        server.
-                    </p>
+            <div css={tw`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3`}>
+                <div css={tw`flex items-center gap-3`}>
+                    <div
+                        css={tw`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-warning/20 text-warning`}
+                    >
+                        <MaterialIcon name={'mark_email_unread'} />
+                    </div>
+                    <div css={tw`flex flex-col`}>
+                        <span css={tw`font-title-md text-title-md text-text-primary`}>
+                            {sent ? 'Tautan verifikasi terkirim' : 'Email belum diverifikasi'}
+                        </span>
+                        <span css={tw`font-body-sm text-body-sm text-text-secondary`}>
+                            {sent ? (
+                                <>
+                                    Tautan verifikasi sudah dikirim ulang ke{' '}
+                                    <code
+                                        css={tw`rounded bg-surface-container px-1.5 py-0.5 font-label-micro text-label-micro text-brand`}
+                                    >
+                                        {email}
+                                    </code>
+                                    . Cek inbox Anda.
+                                </>
+                            ) : (
+                                <>
+                                    Alamat email{' '}
+                                    <code
+                                        css={tw`rounded bg-surface-container px-1.5 py-0.5 font-label-micro text-label-micro text-brand`}
+                                    >
+                                        {email}
+                                    </code>{' '}
+                                    belum diverifikasi. Verifikasi diperlukan sebelum bisa membeli server.
+                                </>
+                            )}
+                        </span>
+                    </div>
+                </div>
+                {!sent && (
+                    <button
+                        type={'button'}
+                        onClick={onResend}
+                        disabled={loading}
+                        css={tw`flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-surface-container-high px-3.5 py-1.5 font-label-md text-label-md font-semibold text-warning shadow-sm transition-colors hover:bg-warning hover:text-surface-base disabled:opacity-60`}
+                    >
+                        <span>{loading ? 'Mengirim…' : 'Kirim ulang'}</span>
+                        {loading ? <Spinner size={'small'} /> : <MaterialIcon name={'forward_to_inbox'} size={16} />}
+                    </button>
                 )}
             </div>
-            {!sent && (
-                <button
-                    type={'button'}
-                    onClick={onResend}
-                    disabled={loading}
-                    css={tw`text-sm font-medium px-3 py-1.5 rounded-md bg-yellow-500 text-neutral-900 hover:bg-yellow-400 disabled:opacity-60 flex-shrink-0`}
-                >
-                    {loading ? <Spinner size={'small'} /> : 'Kirim ulang'}
-                </button>
-            )}
         </div>
     );
 };

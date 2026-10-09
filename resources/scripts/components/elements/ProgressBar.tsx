@@ -59,7 +59,9 @@ export default () => {
     }, [progress, continuous]);
 
     return (
-        <div css={tw`w-full fixed`} style={{ height: '2px' }}>
+        // z-50: TopHeader AppShell kini `sticky` dan ber-z-index, jadi bar ini
+        // harus di atasnya atau tertutup oleh header.
+        <div css={tw`w-full fixed z-50`} style={{ height: '2px' }}>
             <CSSTransition timeout={150} appear in={visible} unmountOnExit classNames={'fade'}>
                 <BarFill style={{ width: progress === undefined ? '100%' : `${progress}%` }} />
             </CSSTransition>

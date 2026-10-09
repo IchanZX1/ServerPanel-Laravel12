@@ -10,6 +10,7 @@ import StatGraphs from '@/components/server/console/StatGraphs';
 import PowerButtons from '@/components/server/console/PowerButtons';
 import ServerDetailsBlock from '@/components/server/console/ServerDetailsBlock';
 import { Alert } from '@/components/elements/alert';
+import tw from 'twin.macro';
 
 export type PowerAction = 'start' | 'stop' | 'restart' | 'kill';
 
@@ -32,26 +33,38 @@ const ServerConsoleContainer = () => {
                         : 'This server is currently being transferred to another node and all actions are unavailable.'}
                 </Alert>
             )}
-            <div className={'grid grid-cols-4 gap-4 mb-4'}>
-                <div className={'hidden sm:block sm:col-span-2 lg:col-span-3 pr-4'}>
-                    <h1 className={'font-sans font-semibold text-2xl text-neutral-100 tracking-tight leading-snug line-clamp-1'}>
-                        {name}
-                    </h1>
-                    <p className={'text-sm text-neutral-400 line-clamp-2 mt-0.5'}>{description}</p>
+            <div
+                css={tw`flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 bg-surface-card p-space-md rounded-xl shadow-md`}
+            >
+                <div css={tw`flex flex-col min-w-0`}>
+                    <div css={tw`flex items-center gap-3`}>
+                        <h1
+                            css={tw`font-headline-md text-headline-md text-text-primary tracking-tight truncate`}
+                        >
+                            {name}
+                        </h1>
+                        <span
+                            css={tw`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-success-bg text-success font-label-micro text-label-micro uppercase font-bold tracking-widest flex-shrink-0`}
+                        >
+                            <span css={tw`w-1.5 h-1.5 rounded-full bg-success animate-pulse`} />
+                            Running
+                        </span>
+                    </div>
+                    <p css={tw`font-body-md text-body-md text-text-secondary mt-1 truncate`}>{description}</p>
                 </div>
-                <div className={'col-span-4 sm:col-span-2 lg:col-span-1 self-end'}>
+                <div css={tw`self-start md:self-auto`}>
                     <Can action={['control.start', 'control.stop', 'control.restart']} matchAny>
-                        <PowerButtons className={'flex sm:justify-end space-x-2'} />
+                        <PowerButtons className={'flex items-center gap-2'} />
                     </Can>
                 </div>
             </div>
-            <div className={'grid grid-cols-4 gap-2 sm:gap-4 mb-4'}>
-                <div className={'flex col-span-4 lg:col-span-3'}>
+            <div className={'grid grid-cols-1 lg:grid-cols-4 gap-space-lg mb-6'}>
+                <div className={'flex lg:col-span-3'}>
                     <Spinner.Suspense>
                         <Console />
                     </Spinner.Suspense>
                 </div>
-                <ServerDetailsBlock className={'col-span-4 lg:col-span-1 order-last lg:order-none'} />
+                <ServerDetailsBlock className={'lg:col-span-1'} />
             </div>
             <div className={'grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4'}>
                 <Spinner.Suspense>

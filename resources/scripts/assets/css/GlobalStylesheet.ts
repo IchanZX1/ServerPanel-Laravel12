@@ -5,6 +5,14 @@ import font from '@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-w
 // DESIGN.md — font.family.primary=Outfit (adopsi sebagian; palet panel tetap)
 // @ts-expect-error untyped font file
 import outfit from '@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2';
+// PRD — JetBrains Mono untuk terminal & metrik telemetri.
+// @ts-expect-error untyped font file
+import jetbrainsMono from '@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2';
+// DESIGN.md — Material Symbols Outlined, satu-satunya ikon di keempat brief.
+// Bobot statis 400 (bukan paket variable): brief tidak memakai sumbu wght/FILL
+// sama sekali, dan latin-400 hanya 323 KB sedangkan latin-wght variable 757 KB.
+// @ts-expect-error untyped font file
+import materialSymbols from '@fontsource/material-symbols-outlined/files/material-symbols-outlined-latin-400-normal.woff2';
 
 export default createGlobalStyle`
     @font-face {
@@ -23,6 +31,60 @@ export default createGlobalStyle`
         font-weight: 100 900;
         src: url(${outfit}) format('woff2-variations');
         unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+    }
+
+    /*
+     * PRD — JetBrains Mono (Terminal & Telemetri).
+     * Rentang bobot variable-nya 100–800, bukan 100–900 seperti Outfit.
+     * Tanpa @font-face ini, utility font-mono dan th('fontFamily.mono') akan
+     * jatuh ke stack monospace sistem dan brief tidak terpenuhi.
+     */
+    @font-face {
+        font-family: 'JetBrains Mono';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 100 800;
+        src: url(${jetbrainsMono}) format('woff2-variations');
+        unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+    }
+
+    /*
+     * DESIGN.md — Material Symbols Outlined.
+     * Bobot statis 400 karena keempat brief hanya memakai kelas
+     * material-symbols-outlined polos, tanpa sumbu wght/FILL.
+     */
+    @font-face {
+        font-family: 'Material Symbols Outlined';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 400;
+        src: url(${materialSymbols}) format('woff2');
+        unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+    }
+
+    /*
+     * Rule ligature Material Symbols.
+     *
+     * WAJIB ditulis sendiri: CSS bawaan @fontsource/material-symbols-outlined
+     * hanya berisi @font-face, tanpa rule class. Tanpa font-feature-settings
+     * 'liga' di sini, nama ikon dirender sebagai TEKS BIASA ("shopping_cart"),
+     * bukan glyph — jadi jangan dihapus meski terlihat berlebihan.
+     */
+    .material-symbols-outlined {
+        font-family: 'Material Symbols Outlined';
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        font-feature-settings: 'liga';
+        -webkit-font-feature-settings: 'liga';
+        -webkit-font-smoothing: antialiased;
     }
 
     /*

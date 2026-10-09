@@ -15,7 +15,7 @@ import { debounce } from 'debounce';
 import { usePersistedState } from '@/plugins/usePersistedState';
 import { SocketEvent, SocketRequest } from '@/components/server/events';
 import classNames from 'classnames';
-import { ChevronDoubleRightIcon } from '@heroicons/react/solid';
+import MaterialIcon from '@/components/elements/MaterialIcon';
 
 import 'xterm/css/xterm.css';
 import styles from './style.module.css';
@@ -201,8 +201,59 @@ export default () => {
     return (
         <div className={classNames(styles.terminal, 'relative')}>
             <SpinnerOverlay visible={!connected} size={'large'} />
+
+            {/* ---- Terminal header bar (brief-1) ---- */}
             <div
-                className={classNames(styles.container, styles.overflows_container, { 'rounded-b': !canSendCommands })}
+                className={
+                    'flex items-center justify-between gap-2 px-4 py-2.5 bg-surface-header rounded-t-xl border border-b-0 border-muted'
+                }
+            >
+                <div className={'flex items-center gap-2 min-w-0'}>
+                    <div className={'flex items-center gap-1.5 flex-shrink-0'} aria-hidden={'true'}>
+                        <span className={'w-2.5 h-2.5 rounded-full bg-danger'} />
+                        <span className={'w-2.5 h-2.5 rounded-full bg-warning'} />
+                        <span className={'w-2.5 h-2.5 rounded-full bg-success'} />
+                    </div>
+                    {/*
+                     * Judul terminal statis: tidak ada field judul sesi di API.
+                     * Sengaja tidak memakai nama server supaya tidak terlihat
+                     * seperti data yang salah tempat.
+                     */}
+                    <span className={'font-mono font-label-sm text-label-sm text-text-secondary ml-2 truncate'}>
+                        bash — pterodactyl-daemon
+                    </span>
+                </div>
+                <div className={'flex items-center gap-3 flex-shrink-0'}>
+                    <span
+                        className={
+                            'hidden sm:flex items-center gap-1 font-label-micro text-label-micro uppercase font-semibold ' +
+                            (connected ? 'text-success' : 'text-text-muted')
+                        }
+                    >
+                        <span
+                            className={classNames(
+                                'w-1.5 h-1.5 rounded-full',
+                                connected ? 'bg-success' : 'bg-text-muted'
+                            )}
+                        />
+                        {connected ? 'WebSocket Connected' : 'WebSocket Offline'}
+                    </span>
+                    <button
+                        type={'button'}
+                        onClick={() => terminal.clear()}
+                        aria-label={'Bersihkan buffer terminal'}
+                        title={'Bersihkan buffer terminal'}
+                        className={'text-text-muted hover:text-text-primary transition-colors'}
+                    >
+                        <MaterialIcon name={'mop'} size={16} />
+                    </button>
+                </div>
+            </div>
+
+            <div
+                className={classNames(styles.container, styles.overflows_container, {
+                    'rounded-b': !canSendCommands,
+                })}
             >
                 <div className={'h-full'}>
                     <div id={styles.terminal} ref={ref} />
@@ -222,11 +273,11 @@ export default () => {
                     />
                     <div
                         className={classNames(
-                            'text-gray-100 peer-focus:text-gray-50 peer-focus:animate-pulse',
+                            'text-brand peer-focus:text-brand peer-focus:animate-pulse',
                             styles.command_icon
                         )}
                     >
-                        <ChevronDoubleRightIcon className={'w-4 h-4'} />
+                        <MaterialIcon name={'keyboard_double_arrow_right'} size={20} />
                     </div>
                 </div>
             )}

@@ -1,13 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-    faClock,
-    faCloudDownloadAlt,
-    faCloudUploadAlt,
-    faHdd,
-    faMemory,
-    faMicrochip,
-    faWifi,
-} from '@fortawesome/free-solid-svg-icons';
 import { bytesToString, ip, mbToBytes } from '@/lib/formatters';
 import { ServerContext } from '@/state/server';
 import { SocketEvent, SocketRequest } from '@/components/server/events';
@@ -19,23 +10,33 @@ import { capitalize } from '@/lib/strings';
 
 type Stats = Record<'memory' | 'cpu' | 'disk' | 'uptime' | 'rx' | 'tx', number>;
 
+/**
+ * Kelas bar progres saat pemakaian mendekati limit. Ambang batasnya
+ * dipertahankan dari versi lama (>0.8 kuning, >0.9 merah), hanya kelas
+ * warnanya yang dipindah ke token brief.
+ */
 const getBackgroundColor = (value: number, max: number | null): string | undefined => {
     const delta = !max ? 0 : value / max;
 
     if (delta > 0.8) {
         if (delta > 0.9) {
-            return 'bg-rose-500/90 border border-rose-400/50';
+            return 'bg-danger';
         }
-        return 'bg-amber-500/90 border border-amber-400/50';
+        return 'bg-warning';
     }
 
     return undefined;
 };
 
+/** Rasio 0–1 pemakaian terhadap limit; `null` kalau limit tak terbatas. */
+const ratio = (value: number, max: number | null): number | null => (!max ? null : Math.min(1, value / max));
+
 const Limit = ({ limit, children }: { limit: string | null; children: React.ReactNode }) => (
     <>
         {children}
-        <span className={'ml-1 text-gray-300 text-[70%] select-none'}>/ {limit || <>&infin;</>}</span>
+        <span className={'ml-1 text-text-muted font-label-sm text-label-sm select-none'}>
+            / {limit || <>&infin;</>}
+        </span>
     </>
 );
 
@@ -88,13 +89,19 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
         });
     });
 
+    const cpuRatio = ratio(stats.cpu, limits.cpu);
+    const memoryRatio = ratio(stats.memory / 1024, limits.memory * 1024);
+    const diskRatio = ratio(stats.disk / 1024, limits.disk * 1024);
+
+    const pct = (value: number | null) => (value === null ? null : `${(value * 100).toFixed(1)}% Limit`);
+
     return (
-        <div className={classNames('grid grid-cols-6 gap-2 md:gap-4', className)}>
-            <StatBlock icon={faWifi} title={'Address'} copyOnClick={allocation}>
-                {allocation}
+        <div className={classNames('flex flex-col gap-2.5', className)}>
+            <StatBlock name={'lan'} title={'Server Address'} copyOnClick={allocation}>
+                <span className={'text-brand truncate'}>{allocation}</span>
             </StatBlock>
             <StatBlock
-                icon={faClock}
+                name={'schedule'}
                 title={'Uptime'}
                 color={getBackgroundColor(status === 'running' ? 0 : status !== 'offline' ? 9 : 10, 10)}
             >
@@ -106,32 +113,74 @@ const ServerDetailsBlock = ({ className }: { className?: string }) => {
                     capitalize(status)
                 )}
             </StatBlock>
-            <StatBlock icon={faMicrochip} title={'CPU Load'} color={getBackgroundColor(stats.cpu, limits.cpu)}>
+            <StatBlock
+                name={'memory'}
+                title={'CPU Load'}
+                color={getBackgroundColor(stats.cpu, limits.cpu)}
+                progress={cpuRatio}
+                chip={pct(cpuRatio)}
+            >
                 {status === 'offline' ? (
-                    <span className={'text-neutral-500 font-medium'}>Offline</span>
+                    <span className={'text-text-muted font-medium'}>Offline</span>
                 ) : (
                     <Limit limit={textLimits.cpu}>{stats.cpu.toFixed(2)}%</Limit>
                 )}
             </StatBlock>
             <StatBlock
-                icon={faMemory}
+                name={'memory_alt'}
                 title={'Memory'}
                 color={getBackgroundColor(stats.memory / 1024, limits.memory * 1024)}
+                progress={memoryRatio}
+                chip={pct(memoryRatio)}
+                chipTone={'cyan'}
             >
                 {status === 'offline' ? (
-                    <span className={'text-neutral-500 font-medium'}>Offline</span>
+                    <span className={'text-text-muted font-medium'}>Offline</span>
                 ) : (
                     <Limit limit={textLimits.memory}>{bytesToString(stats.memory)}</Limit>
                 )}
             </StatBlock>
-            <StatBlock icon={faHdd} title={'Disk'} color={getBackgroundColor(stats.disk / 1024, limits.disk * 1024)}>
+            <StatBlock
+                name={'hard_drive'}
+                title={'Disk Storage'}
+                color={getBackgroundColor(stats.disk / 1024, limits.disk * 1024)}
+                progress={diskRatio}
+                chip={pct(diskRatio)}
+                chipTone={'tertiary'}
+            >
                 <Limit limit={textLimits.disk}>{bytesToString(stats.disk)}</Limit>
             </StatBlock>
-            <StatBlock icon={faCloudDownloadAlt} title={'Network (Inbound)'}>
-                {status === 'offline' ? <span className={'text-neutral-500 font-medium'}>Offline</span> : bytesToString(stats.rx)}
+            <StatBlock name={'cloud_download'} title={'Network Inbound'}>
+                {status === 'offline' ? (
+                    <span className={'text-text-muted font-medium'}>Offline</span>
+                ) : (
+                    <span className={'inline-flex items-center gap-2'}>
+                        <span className={'text-warning'}>{bytesToString(stats.rx)}</span>
+                        <span
+                            className={
+                                'font-label-micro text-label-micro text-warning bg-warning-bg px-2 py-0.5 rounded font-semibold'
+                            }
+                        >
+                            RX
+                        </span>
+                    </span>
+                )}
             </StatBlock>
-            <StatBlock icon={faCloudUploadAlt} title={'Network (Outbound)'}>
-                {status === 'offline' ? <span className={'text-neutral-500 font-medium'}>Offline</span> : bytesToString(stats.tx)}
+            <StatBlock name={'cloud_upload'} title={'Network Outbound'}>
+                {status === 'offline' ? (
+                    <span className={'text-text-muted font-medium'}>Offline</span>
+                ) : (
+                    <span className={'inline-flex items-center gap-2'}>
+                        <span className={'text-cyan-400'}>{bytesToString(stats.tx)}</span>
+                        <span
+                            className={
+                                'font-label-micro text-label-micro text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded font-semibold'
+                            }
+                        >
+                            TX
+                        </span>
+                    </span>
+                )}
             </StatBlock>
         </div>
     );

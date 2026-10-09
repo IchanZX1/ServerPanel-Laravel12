@@ -1,6 +1,6 @@
-import { ExclamationIcon, ShieldExclamationIcon } from '@heroicons/react/outline';
 import React from 'react';
 import classNames from 'classnames';
+import MaterialIcon from '@/components/elements/MaterialIcon';
 
 interface AlertProps {
     type: 'warning' | 'danger';
@@ -12,19 +12,19 @@ export default ({ type, className, children }: AlertProps) => {
     return (
         <div
             className={classNames(
-                'flex items-center border-l-8 text-gray-50 rounded-md shadow px-4 py-3',
+                'flex items-center border-l-8 text-text-primary rounded-md shadow px-4 py-3',
                 {
-                    ['border-red-500 bg-red-500/25']: type === 'danger',
-                    ['border-yellow-500 bg-yellow-500/25']: type === 'warning',
+                    ['border-danger bg-danger/25']: type === 'danger',
+                    ['border-warning bg-warning/25']: type === 'warning',
                 },
                 className
             )}
         >
-            {type === 'danger' ? (
-                <ShieldExclamationIcon className={'w-6 h-6 text-red-400 mr-2'} />
-            ) : (
-                <ExclamationIcon className={'w-6 h-6 text-yellow-500 mr-2'} />
-            )}
+            <MaterialIcon
+                name={type === 'danger' ? 'shield' : 'warning'}
+                size={24}
+                className={classNames('mr-2 flex-shrink-0', type === 'danger' ? 'text-danger' : 'text-warning')}
+            />
             {children}
         </div>
     );

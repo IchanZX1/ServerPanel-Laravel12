@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Dialog as HDialog } from '@headlessui/react';
 import { Button } from '@/components/elements/button/index';
-import { XIcon } from '@heroicons/react/solid';
+import MaterialIcon from '@/components/elements/MaterialIcon';
 import { AnimatePresence, motion } from 'framer-motion';
 import { DialogContext, IconPosition, RenderDialogProps, styles } from './';
 
@@ -116,7 +116,7 @@ export default ({
                                                 onClick={onClose}
                                                 className={'group'}
                                             >
-                                                <XIcon className={styles.close_icon} />
+                                                <MaterialIcon name={'close'} size={20} className={styles.close_icon} />
                                             </Button.Text>
                                         </div>
                                     )}

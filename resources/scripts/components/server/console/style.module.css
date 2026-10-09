@@ -1,25 +1,20 @@
 .stat_block {
-    @apply flex items-center rounded-xl border border-neutral-800/80 bg-neutral-900/90 shadow-lg relative transition-all duration-200 hover:border-neutral-700/80 hover:bg-neutral-900;
-    @apply col-span-3 md:col-span-2 lg:col-span-6;
-    @apply px-3.5 py-3 md:p-3.5 lg:p-4;
+    @apply flex items-center rounded-xl bg-surface-card shadow-sm relative transition-colors duration-200 hover:bg-surface-hover;
+    @apply px-3 py-3;
 
     & > .status_bar {
         @apply w-1.5 h-full absolute left-0 top-0 rounded-l-xl sm:hidden;
     }
 
     & > .icon {
-        @apply hidden flex-shrink-0 items-center justify-center rounded-lg border border-neutral-800 bg-neutral-800/60 shadow-sm w-11 h-11;
-        @apply transition-all duration-300;
-        @apply sm:flex sm:mr-3.5;
-
-        & > svg {
-            @apply w-5 h-5 m-auto;
-        }
+        @apply hidden flex-shrink-0 items-center justify-center rounded-lg w-11 h-11 bg-surface-container-lowest;
+        @apply transition-colors duration-300;
+        @apply sm:flex sm:mr-3;
     }
 }
 
 .terminal {
-    @apply flex flex-col w-full;
+    @apply flex flex-col w-full h-[560px];
 
     & .overflows_container {
         @apply -ml-4 sm:ml-0;
@@ -31,34 +26,34 @@
     }
 
     & > .container {
-        @apply rounded-t-xl p-2 sm:p-3 bg-neutral-950/95 border border-neutral-800/80 min-h-[18rem] flex-1 font-mono text-sm shadow-2xl;
+        @apply p-2 sm:p-3 bg-surface-container-lowest border-x border-muted min-h-[18rem] flex-1 font-mono text-sm shadow-2xl overflow-hidden;
 
         & #terminal {
             @apply h-full;
 
             &::-webkit-scrollbar-track {
-                @apply w-2 bg-neutral-950;
+                @apply w-2 bg-surface-container-lowest;
             }
 
             &::-webkit-scrollbar-thumb {
-                @apply bg-neutral-800 rounded-full hover:bg-neutral-700;
+                @apply bg-surface-container-high rounded-full hover:bg-surface-container-highest;
             }
         }
     }
 
     & .command_icon {
-        @apply flex items-center top-0 left-0 absolute z-10 select-none h-full px-3.5 text-neutral-400 transition-colors duration-150;
+        @apply flex items-center top-0 left-0 absolute z-10 select-none h-full px-3.5 text-brand transition-colors duration-150;
     }
 
     & .command_input {
-        @apply relative bg-neutral-900/90 border-x border-b border-neutral-800/80 text-neutral-100 pl-10 pr-4 py-2.5 w-full font-mono text-sm sm:rounded-b-xl;
+        @apply relative bg-surface-container-lowest border-x border-b border-muted text-text-primary pl-11 pr-4 py-2.5 w-full font-mono text-sm sm:rounded-b-xl;
         @apply focus:ring-0 outline-none focus-visible:outline-none;
         @apply transition-colors duration-150;
-        @apply active:border-cyan-500/80 focus:border-cyan-500/80;
+        @apply focus:border-brand;
     }
 }
 
 .chart_container {
-    @apply bg-neutral-900/90 border border-neutral-800/80 rounded-xl shadow-lg pt-3 relative backdrop-blur-sm transition-all duration-200 hover:border-neutral-700/80;
+    @apply bg-surface-card rounded-xl shadow-md pt-3 relative transition-colors duration-200 hover:bg-surface-hover;
 }
 

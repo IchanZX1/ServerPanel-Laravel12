@@ -16,8 +16,7 @@ import InstallListener from '@/components/server/InstallListener';
 import ServerBillingBanner from '@/components/server/ServerBillingBanner';
 import ContentContainer from '@/components/elements/ContentContainer';
 import ErrorBoundary from '@/components/elements/ErrorBoundary';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import MaterialIcon from '@/components/elements/MaterialIcon';
 import { useLocation } from 'react-router';
 import ConflictStateRenderer from '@/components/server/ConflictStateRenderer';
 import PermissionRoute from '@/components/elements/PermissionRoute';
@@ -34,6 +33,7 @@ export default () => {
     const id = ServerContext.useStoreState((state) => state.server.data?.id);
     const uuid = ServerContext.useStoreState((state) => state.server.data?.uuid);
     const inConflictState = ServerContext.useStoreState((state) => state.server.inConflictState);
+    const nodeName = ServerContext.useStoreState((state) => state.server.data?.node);
     const serverId = ServerContext.useStoreState((state) => state.server.data?.internalId);
     const getServer = ServerContext.useStoreActions((actions) => actions.server.getServer);
     const clearServerState = ServerContext.useStoreActions((actions) => actions.clearServerState);
@@ -65,30 +65,48 @@ export default () => {
         };
     }, [match.params.id]);
 
+    /*
+     * Tab bar server ala brief-1: horizontal, di ATAS konten, bukan di sidebar.
+     *
+     * Sebelumnya daftar ini dirender vertikal di dalam sidebar AppShell. Brief-1
+     * menaruhnya sebagai tab bar horizontal di bawah header halaman, dan sidebar
+     * memang tidak punya seksi "Server". Karena itu sub-navigation server
+     * dipindah ke sini; sidebar hanya menyisakan Dashboard/Store/Account/Admin.
+     *
+     * Varian `vertical` SubNavigation tidak berubah — DashboardRouter masih
+     * memakainya untuk seksi "Account".
+     */
     const serverSubNav =
         uuid && id ? (
             <CSSTransition timeout={150} classNames={'fade'} appear in>
-                <SubNavigation vertical title={'Server'}>
+                <SubNavigation>
                     {routes.server
                         .filter((route) => !!route.name)
                         .map((route) =>
                             route.permission ? (
                                 <Can key={route.path} action={route.permission} matchAny>
                                     <NavLink to={to(route.path, true)} exact={route.exact}>
+                                        {route.icon && <MaterialIcon name={route.icon} size={18} />}
                                         {route.name}
                                     </NavLink>
                                 </Can>
                             ) : (
                                 <NavLink key={route.path} to={to(route.path, true)} exact={route.exact}>
+                                    {route.icon && <MaterialIcon name={route.icon} size={18} />}
                                     {route.name}
                                 </NavLink>
                             )
                         )}
                     {rootAdmin && (
                         // eslint-disable-next-line react/jsx-no-target-blank
-                        <a href={`/admin/servers/view/${serverId}`} target={'_blank'} rel={'noreferrer'}>
-                            <FontAwesomeIcon icon={faExternalLinkAlt} aria-hidden={'true'} />
+                        <a
+                            href={`/admin/servers/view/${serverId}`}
+                            target={'_blank'}
+                            rel={'noreferrer'}
+                            css={tw`ml-2`}
+                        >
                             Admin
+                            <MaterialIcon name={'open_in_new'} size={16} />
                         </a>
                     )}
                 </SubNavigation>
@@ -97,7 +115,7 @@ export default () => {
 
     return (
         <React.Fragment key={'server-router'}>
-            <AppShell subNavigation={serverSubNav as React.ReactNode}>
+            <AppShell node={nodeName}>
                 {!uuid || !id ? (
                     error ? (
                         <ServerError message={error} />
@@ -109,9 +127,10 @@ export default () => {
                         <InstallListener />
                         <TransferListener />
                         <WebsocketHandler />
-                        {/* Banner billing realtime di atas semua tab server.
-                            Tidak render apa pun bila server tak terikat billing. */}
                         <ContentContainer css={tw`mt-4 xl:mt-6`}>
+                            {serverSubNav}
+                            {/* Banner billing realtime di atas semua tab server.
+                                Tidak render apa pun bila server tak terikat billing. */}
                             <ServerBillingBanner />
                         </ContentContainer>
                         {inConflictState &&

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import MaterialIcon from '@/components/elements/MaterialIcon';
 import useEventListener from '@/plugins/useEventListener';
 import SearchModal from '@/components/dashboard/search/SearchModal';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
@@ -31,7 +30,7 @@ export default ({ label }: Props) => {
             <>
                 {visible && <SearchModal appear visible={visible} onDismissed={() => setVisible(false)} />}
                 <button className={'navigation-link'} type={'button'} onClick={() => setVisible(true)}>
-                    <FontAwesomeIcon icon={faSearch} aria-hidden={'true'} />
+                    <MaterialIcon name={'search'} size={20} />
                     <span css={tw`flex-1`}>{label}</span>
                     <kbd css={tw`text-2xs font-mono text-neutral-500 border border-neutral-700 rounded-xs px-1.5 py-0.5`}>
                         Ctrl+/
@@ -46,7 +45,7 @@ export default ({ label }: Props) => {
             {visible && <SearchModal appear visible={visible} onDismissed={() => setVisible(false)} />}
             <Tooltip placement={'bottom'} content={'Search'}>
                 <div className={'navigation-link'} onClick={() => setVisible(true)}>
-                    <FontAwesomeIcon icon={faSearch} />
+                    <MaterialIcon name={'search'} size={20} />
                 </div>
             </Tooltip>
         </>

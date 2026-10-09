@@ -28,6 +28,12 @@ interface RouteDefinition {
     // If undefined is passed this route is still rendered into the router itself
     // but no navigation link is displayed in the sub-navigation menu.
     name: string | undefined;
+    /**
+     * Nama ligature Material Symbols untuk tab bar horizontal brief-1.
+     * Kosong = tanpa ikon (dipakai array `account`, yang tampilannya tidak
+     * diubah oleh refactor ini).
+     */
+    icon?: string;
     component: React.ComponentType;
     exact?: boolean;
 }
@@ -77,6 +83,7 @@ export default {
             path: '/',
             permission: null,
             name: 'Console',
+            icon: 'terminal',
             component: ServerConsole,
             exact: true,
         },
@@ -84,6 +91,7 @@ export default {
             path: '/files',
             permission: 'file.*',
             name: 'Files',
+            icon: 'folder',
             component: FileManagerContainer,
         },
         {
@@ -96,12 +104,14 @@ export default {
             path: '/databases',
             permission: 'database.*',
             name: 'Databases',
+            icon: 'database',
             component: DatabasesContainer,
         },
         {
             path: '/schedules',
             permission: 'schedule.*',
             name: 'Schedules',
+            icon: 'calendar_month',
             component: ScheduleContainer,
         },
         {
@@ -114,36 +124,42 @@ export default {
             path: '/users',
             permission: 'user.*',
             name: 'Users',
+            icon: 'group',
             component: UsersContainer,
         },
         {
             path: '/backups',
             permission: 'backup.*',
             name: 'Backups',
+            icon: 'archive',
             component: BackupContainer,
         },
         {
             path: '/network',
             permission: 'allocation.*',
             name: 'Network',
+            icon: 'lan',
             component: NetworkContainer,
         },
         {
             path: '/startup',
             permission: 'startup.*',
             name: 'Startup',
+            icon: 'play_circle',
             component: StartupContainer,
         },
         {
             path: '/settings',
             permission: ['settings.*', 'file.sftp'],
             name: 'Settings',
+            icon: 'tune',
             component: SettingsContainer,
         },
         {
             path: '/activity',
             permission: 'activity.*',
             name: 'Activity',
+            icon: 'history',
             component: ServerActivityLogContainer,
         },
     ],

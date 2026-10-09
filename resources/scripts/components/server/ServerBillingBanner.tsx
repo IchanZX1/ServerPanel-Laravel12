@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckCircle, faClock, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import MaterialIcon from '@/components/elements/MaterialIcon';
 import tw from 'twin.macro';
 import getBillingSubscriptions from '@/api/billing/getBillingSubscriptions';
 import { BillingSubscription } from '@/api/billing/types';
@@ -76,21 +75,21 @@ export default () => {
     const expired = expiresMs !== null && expiresMs - nowMs <= 0;
 
     const kind = subscription.status === 'suspended' || expired ? 'danger' : subscription.status === 'pending_payment' ? 'warn' : 'ok';
-    const icon = kind === 'ok' ? faCheckCircle : kind === 'warn' ? faClock : faExclamationTriangle;
+    const icon = kind === 'ok' ? 'verified' : kind === 'warn' ? 'schedule' : 'warning';
 
     return (
         <div
             role={'timer'}
             aria-label={'Status billing server'}
             css={[
-                tw`flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 mb-4 rounded-lg border text-sm`,
-                kind === 'ok' && tw`border-green-500/30 bg-green-500/10 text-green-400`,
-                kind === 'warn' && tw`border-yellow-500/30 bg-yellow-500/10 text-yellow-400`,
-                kind === 'danger' && tw`border-red-500/30 bg-red-500/10 text-red-400`,
+                tw`flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 mb-5 rounded-lg font-body-md text-body-md shadow-sm`,
+                kind === 'ok' && tw`bg-success-bg text-success`,
+                kind === 'warn' && tw`bg-warning-bg text-warning`,
+                kind === 'danger' && tw`bg-danger-bg text-danger`,
             ]}
         >
-            <span css={tw`inline-flex items-center gap-2 font-medium`}>
-                <FontAwesomeIcon icon={icon} aria-hidden={'true'} css={tw`w-4 h-4`} />
+            <span css={tw`inline-flex items-center gap-2`}>
+                <MaterialIcon name={icon} size={20} />
                 {kind === 'ok' && (
                     <>
                         Billing aktif
@@ -104,17 +103,40 @@ export default () => {
             </span>
             <span css={tw`inline-flex items-center gap-3`}>
                 {expiresMs !== null && kind === 'ok' && (
-                    <span css={tw`text-xs opacity-80`}>
-                        hingga {new Date(expiresMs).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    <span css={tw`font-label-sm text-label-sm opacity-80`}>
+                        hingga{' '}
+                        {new Date(expiresMs).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                        })}
                     </span>
                 )}
                 {pendingInvoice ? (
-                    <Link to={`/store/invoice/${pendingInvoice.id}`} css={tw`font-medium underline hover:no-underline`}>
+                    <Link
+                        to={`/store/invoice/${pendingInvoice.id}`}
+                        css={[
+                            tw`inline-flex items-center gap-1 px-3 py-1 rounded font-label-sm text-label-sm font-semibold no-underline transition-colors`,
+                            kind === 'ok' && tw`bg-success/20 hover:bg-success/30`,
+                            kind === 'warn' && tw`bg-warning/20 hover:bg-warning/30`,
+                            kind === 'danger' && tw`bg-danger/20 hover:bg-danger/30`,
+                        ]}
+                    >
                         Bayar sekarang
+                        <MaterialIcon name={'arrow_forward'} size={14} />
                     </Link>
                 ) : (
-                    <Link to={'/account/billing'} css={tw`font-medium underline hover:no-underline`}>
+                    <Link
+                        to={'/account/billing'}
+                        css={[
+                            tw`inline-flex items-center gap-1 px-3 py-1 rounded font-label-sm text-label-sm font-semibold no-underline transition-colors`,
+                            kind === 'ok' && tw`bg-success/20 hover:bg-success/30`,
+                            kind === 'warn' && tw`bg-warning/20 hover:bg-warning/30`,
+                            kind === 'danger' && tw`bg-danger/20 hover:bg-danger/30`,
+                        ]}
+                    >
                         Billing
+                        <MaterialIcon name={'arrow_forward'} size={14} />
                     </Link>
                 )}
             </span>

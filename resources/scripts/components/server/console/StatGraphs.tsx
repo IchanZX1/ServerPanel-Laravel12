@@ -6,7 +6,7 @@ import { Line } from 'react-chartjs-2';
 import { useChart, useChartTickLabel } from '@/components/server/console/chart';
 import { hexToRgba } from '@/lib/helpers';
 import { bytesToString } from '@/lib/formatters';
-import { CloudDownloadIcon, CloudUploadIcon } from '@heroicons/react/solid';
+import MaterialIcon from '@/components/elements/MaterialIcon';
 import { theme } from 'twin.macro';
 import ChartBlock from '@/components/server/console/ChartBlock';
 import Tooltip from '@/components/elements/tooltip/Tooltip';
@@ -68,21 +68,22 @@ export default () => {
 
     return (
         <>
-            <ChartBlock title={'CPU Load'}>
+            <ChartBlock title={'CPU Load'} icon={'memory'}>
                 <Line {...cpu.props} />
             </ChartBlock>
-            <ChartBlock title={'Memory'}>
+            <ChartBlock title={'Memory'} icon={'storage'}>
                 <Line {...memory.props} />
             </ChartBlock>
             <ChartBlock
                 title={'Network'}
+                icon={'swap_vert'}
                 legend={
                     <>
                         <Tooltip arrow content={'Inbound'}>
-                            <CloudDownloadIcon className={'mr-2 w-4 h-4 text-yellow-400'} />
+                            <MaterialIcon name={'cloud_download'} size={16} className={'mr-2 text-yellow-400'} />
                         </Tooltip>
                         <Tooltip arrow content={'Outbound'}>
-                            <CloudUploadIcon className={'w-4 h-4 text-cyan-400'} />
+                            <MaterialIcon name={'cloud_upload'} size={16} className={'text-cyan-400'} />
                         </Tooltip>
                     </>
                 }
