@@ -216,6 +216,5 @@
             </script>
         @show
 
-        @include('partials.sociabuzz')
     </body>
 </html>

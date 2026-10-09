@@ -1,17 +1,40 @@
 const colors = require('tailwindcss/colors');
 
-const gray = {
-    50: 'hsl(216, 33%, 97%)',
-    100: 'hsl(214, 15%, 91%)',
-    200: 'hsl(210, 16%, 82%)',
-    300: 'hsl(211, 13%, 65%)',
-    400: 'hsl(211, 10%, 53%)',
-    500: 'hsl(211, 12%, 43%)',
-    600: 'hsl(209, 14%, 37%)',
-    700: 'hsl(209, 18%, 30%)',
-    800: 'hsl(209, 20%, 25%)',
-    900: 'hsl(210, 24%, 16%)',
+/*
+ * Warna yang bisa berpindah tema.
+ *
+ * Bentuknya `rgb(var(--nama, R G B) / <alpha-value>)`, bukan hex biasa:
+ *
+ *  - `var()` supaya blok `html.light` di GlobalStylesheet.ts bisa menimpanya —
+ *    itulah yang membuat tombol tema brief-5 mengubah SELURUH panel, bukan
+ *    cuma sidebar.
+ *  - fallback `R G B` di dalam var() adalah nilai mode gelap semula, sehingga
+ *    mode gelap tidak bergeser sedikit pun (dan tetap benar meski stylesheet
+ *    tema belum termuat).
+ *  - kanal dipisah, bukan `hsl(...)`/`#hex`, karena Tailwind hanya bisa
+ *    menurunkan alpha (`bg-neutral-800/60`) kalau warnanya berupa kanal.
+ *    Tanpa itu setiap kelas ber-alpha gagal dikompilasi.
+ */
+const tone = (name, channels) => `rgb(var(${name}, ${channels}) / <alpha-value>)`;
+
+/*
+ * Ramp netral panel. Nilai kanalnya sama dengan hsl() lama
+ * (hsl(210, 24%, 16%) = 20 41 62) — cuma ditulis sebagai kanal RGB.
+ */
+const neutral = {
+    50: tone('--z0ne-neutral-50', '245 247 250'),
+    100: tone('--z0ne-neutral-100', '229 232 235'),
+    200: tone('--z0ne-neutral-200', '202 209 216'),
+    300: tone('--z0ne-neutral-300', '154 165 177'),
+    400: tone('--z0ne-neutral-400', '123 135 147'),
+    500: tone('--z0ne-neutral-500', '96 109 123'),
+    600: tone('--z0ne-neutral-600', '81 95 108'),
+    700: tone('--z0ne-neutral-700', '63 77 90'),
+    800: tone('--z0ne-neutral-800', '51 64 77'),
+    900: tone('--z0ne-neutral-900', '20 41 62'),
 };
+
+const gray = neutral;
 
 module.exports = {
     content: [
@@ -73,36 +96,47 @@ module.exports = {
                     container: '#06b6d4',
                 },
                 'on-primary': '#003640',
-                'on-surface': '#e4e1e6',
-                'on-surface-variant': '#bcc9cd',
+                'on-surface': tone('--z0ne-on-surface', '228 225 230'),
+                'on-surface-variant': tone('--z0ne-on-surface-variant', '188 201 205'),
                 error: '#ffb4ab',
 
-                // Permukaan. `surface-base` = background halaman, `-card` = kartu,
-                // `-header` = bar header/modal, `container-*` = blok bersarang.
+                /*
+                 * Permukaan. `surface-base` = background halaman, `-card` = kartu,
+                 * `-header` = bar header/modal, `container-*` = blok bersarang.
+                 *
+                 * Nilainya dibungkus var() dengan fallback gelap. Alasannya:
+                 * tombol tema di sidebar (brief-5) mengganti kelas `light` di
+                 * <html>, dan blok `html.light` di GlobalStylesheet.ts menimpa
+                 * variabel-variabel ini supaya SELURUH panel berubah — bukan
+                 * cuma sidebar. Kalau variabelnya kosong (mis. stylesheet belum
+                 * termuat), fallback-nya mengembalikan warna gelap semula,
+                 * jadi tidak ada regresi pada mode gelap.
+                 */
                 surface: {
-                    base: '#09090b',
-                    muted: '#131316',
-                    dim: '#131316',
-                    strong: '#17171b',
-                    card: '#141418',
-                    header: '#1c1c22',
-                    hover: '#22222a',
-                    active: '#2a2a35',
-                    'container-lowest': '#0e0e11',
-                    'container-low': '#1b1b1e',
-                    container: '#1f1f22',
-                    'container-high': '#2a2a2d',
-                    'container-highest': '#353438',
+                    base: tone('--z0ne-surface-base', '9 9 11'),
+                    muted: tone('--z0ne-surface-muted', '19 19 22'),
+                    dim: tone('--z0ne-surface-dim', '19 19 22'),
+                    strong: tone('--z0ne-surface-strong', '23 23 27'),
+                    card: tone('--z0ne-surface-card', '20 20 24'),
+                    header: tone('--z0ne-surface-header', '28 28 34'),
+                    hover: tone('--z0ne-surface-hover', '34 34 42'),
+                    active: tone('--z0ne-surface-active', '42 42 53'),
+                    'container-lowest': tone('--z0ne-surface-container-lowest', '14 14 17'),
+                    'container-low': tone('--z0ne-surface-container-low', '27 27 30'),
+                    container: tone('--z0ne-surface-container', '31 31 34'),
+                    'container-high': tone('--z0ne-surface-container-high', '42 42 45'),
+                    'container-highest': tone('--z0ne-surface-container-highest', '53 52 56'),
                 },
 
                 // Teks. Dipakai sebagai `text-text-primary` — brief menamai
                 // token-nya `text-primary`, tapi nama itu bertabrakan dengan
-                // warna `primary` (ramp blue) di atas.
+                // warna `primary` (ramp blue) di atas. Sama seperti permukaan,
+                // nilainya bisa ditimpa mode terang.
                 text: {
-                    primary: '#fafafa',
-                    secondary: '#a1a1aa',
-                    tertiary: '#e4e4e7',
-                    muted: '#71717a',
+                    primary: tone('--z0ne-text-primary', '250 250 250'),
+                    secondary: tone('--z0ne-text-secondary', '161 161 170'),
+                    tertiary: tone('--z0ne-text-tertiary', '228 228 231'),
+                    muted: tone('--z0ne-text-muted', '113 113 122'),
                 },
 
                 // Status + varian latar transparannya.
@@ -120,9 +154,9 @@ module.exports = {
                  * (`bg-border-muted`) warna itu juga perlu terdaftar di sini.
                  */
                 border: {
-                    DEFAULT: '#3f3f46',
-                    muted: '#29292f',
-                    strong: '#3f3f46',
+                    DEFAULT: tone('--z0ne-border-default', '63 63 70'),
+                    muted: tone('--z0ne-border-muted', '41 41 47'),
+                    strong: tone('--z0ne-border-strong', '63 63 70'),
                 },
             },
             fontSize: {
@@ -180,8 +214,9 @@ module.exports = {
                 default: theme('colors.neutral.400', 'currentColor'),
                 // DESIGN.md — border.muted/strong. `border-strong` dipakai brief
                 // untuk tepi yang lebih tegas, `border-muted` untuk pemisah halus.
-                muted: '#29292f',
-                strong: '#3f3f46',
+                // Lewat var() juga, supaya garis pemisah ikut berubah di mode terang.
+                muted: tone('--z0ne-border-muted', '41 41 47'),
+                strong: tone('--z0ne-border-strong', '63 63 70'),
             }),
         },
     },

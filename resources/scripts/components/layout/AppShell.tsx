@@ -1,17 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useStoreState } from 'easy-peasy';
-import { ApplicationStore } from '@/state';
-import SearchContainer from '@/components/dashboard/search/SearchContainer';
+import classNames from 'classnames';
+import { ApplicationStore, store } from '@/state';import SearchContainer from '@/components/dashboard/search/SearchContainer';
 import MaterialIcon from '@/components/elements/MaterialIcon';
-import tw, { theme } from 'twin.macro';
+import tw from 'twin.macro';
 import styled from 'styled-components/macro';
 import http from '@/api/http';
 import SpinnerOverlay from '@/components/elements/SpinnerOverlay';
 import useEventListener from '@/plugins/useEventListener';
 import { breakpoint } from '@/theme';
-// Aset di-import lewat webpack (svg-url-loader) — sama seperti LoginFormContainer.
-import logo from '@/assets/images/pterodactyl.svg';
+import i18n from '@/i18n';
 
 interface Props {
     /** Tab kontekstual (mis. daftar halaman /account atau /server/:id) yang tampil di dalam sidebar. */
@@ -24,50 +23,64 @@ interface Props {
     node?: string | null;
 }
 
-/**
- * Styling bersama untuk semua baris navigasi sidebar. Memakai pola descendant
- * selector yang sama seperti NavigationBar lama, supaya SearchContainer dan
- * ikon apa pun yang dirender sebagai anak langsung bisa ikut ter-style tanpa
- * perlu tahu soal sidebar.
+/*
+ * brief-5 — baris navigasi sidebar.
+ *
+ * Semua baris (link rute, tombol nonaktif, dan SearchContainer) memakai bentuk
+ * yang sama persis: ikon 20px + label `label-md`, radius `lg`, jarak `gap-3`.
+ * SearchContainer tidak diubah; ia merender `.navigation-link`, dan selektor
+ * descendant di bawah ini yang menyeragamkannya dengan baris lain.
  */
-const NavList = styled.div`
-    ${tw`flex flex-col gap-1 px-3`};
-
+const NavRow = styled.div`
     & > a,
     & > button,
     & > .navigation-link {
-        ${tw`flex items-center w-full px-4 py-2.5 rounded-md text-sm font-medium text-left text-neutral-300 no-underline bg-transparent border-0 cursor-pointer transition-colors duration-150`};
+        ${tw`flex items-center w-full gap-3 px-3 py-2 rounded-lg text-left no-underline bg-transparent border-0 cursor-pointer transition-colors duration-150 font-label-md text-label-md text-on-surface-variant`};
 
-        & > svg,
-        /*
-         * MaterialIcon merender <span>, bukan <svg> — tanpa selektor ini ikon
-         * sidebar kehilangan ukuran & jarak dan barisnya jadi tidak sejajar
-         * dengan teks. Ukuran ditulis sebagai font-size karena glyph ligature
-         * diskalakan lewat font-size, bukan width/height.
-         */
         & > .material-symbols-outlined {
-            ${tw`text-[1rem] leading-none mr-3 flex-shrink-0`};
+            ${tw`text-[20px] leading-none flex-shrink-0`};
         }
 
         &:hover {
-            ${tw`text-neutral-100 bg-neutral-800`};
-        }
-
-        &.active {
-            ${tw`text-neutral-100 bg-black`};
+            ${tw`bg-surface-hover text-on-surface`};
         }
 
         &:focus-visible {
-            ${tw`outline-none ring-2 ring-cyan-400 ring-offset-2 ring-offset-neutral-900`};
+            ${tw`outline-none ring-2 ring-brand ring-offset-2 ring-offset-surface-card`};
+        }
+    }
+
+    /* Baris aktif brief-5: kotak terangkat + ikon berwarna brand + label tebal. */
+    & > a.active,
+    & > button.active {
+        ${tw`bg-surface-active text-text-primary border border-strong shadow-sm font-semibold`};
+
+        & > .material-symbols-outlined {
+            ${tw`text-brand`};
+        }
+    }
+
+    /* Entri tanpa halaman (lihat daftar disabled di bawah): tetap terlihat, mati. */
+    & > button[aria-disabled='true'] {
+        ${tw`opacity-40 cursor-not-allowed`};
+
+        &:hover {
+            ${tw`bg-transparent text-on-surface-variant`};
         }
     }
 `;
 
-const NavItem = styled(NavLink)`
-    &.active {
-        box-shadow: inset 2px 0 ${theme`colors.cyan.500`.toString()};
-    }
-`;
+/*
+ * Kode bahasa: dua huruf kecil, sama dengan format kolom `language` di tabel users
+ * (lihat App\Models\User::getAvailableLanguages()).
+ */
+const LANGUAGES: { code: string; label: string }[] = [
+    { code: 'id', label: 'ID ID' },
+    { code: 'en', label: 'GB EN' },
+];
+
+const THEME_STORAGE_KEY = 'z0ne.theme';
+const LANGUAGE_STORAGE_KEY = 'z0ne.language';
 
 /**
  * Top header cluster (PRD: "header cluster node (SG-01)").
@@ -78,11 +91,11 @@ const NavItem = styled(NavLink)`
  * di-hardcode, karena nama node berasal dari tabel `nodes` di DB.
  */
 const TopHeader = styled.header`
-    ${tw`sticky top-0 z-30 flex items-center justify-between h-14 px-4 bg-neutral-900 border-b border-neutral-800`};
+    ${tw`sticky top-0 z-30 flex items-center justify-between h-14 px-4 bg-surface-header border-b border-muted`};
 `;
 
 const ClusterBadge = styled.span`
-    ${tw`inline-flex items-center gap-2 px-2.5 py-1 rounded-xs bg-neutral-800 border border-neutral-700 text-2xs font-mono text-neutral-300`};
+    ${tw`inline-flex items-center gap-2 px-2.5 py-1 rounded-xs bg-surface-container-high border border-muted text-2xs font-mono text-text-secondary`};
 `;
 
 // Catatan: JANGAN pakai utility translate Twin (`-translate-x-full`) di sini.
@@ -90,7 +103,7 @@ const ClusterBadge = styled.span`
 // tidak memancarkan definisi `--tw-transform`, sehingga transform-nya jadi tidak
 // valid dan sidebar tidak pernah benar-benar bergeser. Tulis transform eksplisit.
 const Sidebar = styled.nav<{ $open: boolean }>`
-    ${tw`fixed top-0 left-0 z-40 flex flex-col h-screen w-64 bg-neutral-900 border-r border-neutral-800 overflow-hidden`};
+    ${tw`fixed top-0 left-0 z-40 flex flex-col h-screen w-64 bg-surface-card border-r border-muted overflow-hidden`};
     transform: translateX(-100%);
     transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
     will-change: transform;
@@ -102,13 +115,60 @@ const Sidebar = styled.nav<{ $open: boolean }>`
     ${(props) => props.$open && 'transform: translateX(0);'};
 `;
 
+/**
+ * Header grup nav (MENU / ACCOUNT & WALLET / LAINNYA) — brief-5 merendernya
+ * sebagai tombol lipat dengan ikon `expand_less`.
+ */
+const GroupHeader = styled.button`
+    ${tw`flex items-center justify-between w-full px-2 py-1 bg-transparent border-0 cursor-pointer text-text-muted`};
+
+    &:focus-visible {
+        ${tw`outline-none ring-2 ring-brand rounded-sm`};
+    }
+`;
+
+const GroupLabel = styled.span`
+    ${tw`font-label-micro text-label-micro font-bold tracking-wider uppercase`};
+`;
+
+const GroupNav = styled(NavRow)`
+    ${tw`space-y-0.5`};
+`;
+
+/** Baris tunggal yang tidak menuju halaman apa pun di panel ini. */
+const DisabledRow = ({ icon, label }: { icon: string; label: string }) => (
+    <button type={'button'} aria-disabled={'true'} title={`${label} belum tersedia di panel ini`}>
+        <MaterialIcon name={icon} size={20} />
+        <span>{label}</span>
+    </button>
+);
+
 const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
     const name = useStoreState((state: ApplicationStore) => state.settings.data!.name);
     const rootAdmin = useStoreState((state: ApplicationStore) => state.user.data!.rootAdmin);
+    const username = useStoreState((state: ApplicationStore) => state.user.data!.username);
+    const accountLanguage = useStoreState((state: ApplicationStore) => state.user.data!.language);
+    const updateUserData = useStoreState((state: ApplicationStore) => state.user.updateUserData);
 
     const { pathname } = useLocation();
     const [open, setOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    /*
+     * Tema terang/gelap brief-5.
+     *
+     * Nilai awalnya dibaca dari localStorage SAAT RENDER PERTAMA (bukan di efek),
+     * supaya kelas `light` sudah terpasang sebelum paint pertama dan layar tidak
+     * berkedip gelap lalu berubah terang.
+     */
+    const [light, setLight] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) === 'light');
+    const [language, setLanguage] = useState(
+        () => localStorage.getItem(LANGUAGE_STORAGE_KEY) || accountLanguage || 'en'
+    );
+
+    // Tiap grup bisa dilipat sendiri-sendiri; semuanya terbuka seperti mockup.
+    const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+    const toggleGroup = (key: string) => setCollapsed((value) => ({ ...value, [key]: !value[key] }));
 
     const toggleRef = useRef<HTMLButtonElement>(null);
     const sidebarRef = useRef<HTMLElement>(null);
@@ -120,6 +180,39 @@ const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
             // @ts-expect-error this is valid
             window.location = '/';
         });
+    };
+
+    /*
+     * Kelas `light`/`dark` dipasang di <html>. Pasangan warnanya ada di
+     * GlobalStylesheet (blok `html.light`), bukan di sini — supaya seluruh panel
+     * ikut berubah, bukan cuma sidebar.
+     */
+    useEffect(() => {
+        const root = document.documentElement;
+
+        root.classList.toggle('light', light);
+        root.classList.toggle('dark', !light);
+        localStorage.setItem(THEME_STORAGE_KEY, light ? 'light' : 'dark');
+    }, [light]);
+
+    /*
+     * Ganti bahasa.
+     *
+     * `i18n.changeLanguage()` benar-benar mengganti bahasa antarmuka, tetapi baru
+     * terlihat kalau folder terjemahannya ada: panel ini cuma punya
+     * `resources/lang/en`, jadi kode yang belum punya folder akan jatuh ke `en`
+     * (perilaku bawaan i18next). Pilihannya tetap disimpan supaya ikut terbawa
+     * begitu terjemahan barunya ditambahkan.
+     *
+     * Tidak ada endpoint API untuk menyimpan bahasa akun (routes/api-client.php
+     * hanya punya PUT /email dan /password), jadi pilihan ini belum tersimpan ke
+     * kolom `language` di tabel users.
+     */
+    const changeLanguage = (code: string) => {
+        setLanguage(code);
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, code);
+        i18n.changeLanguage(code);
+        store.getActions().user.updateUserData({ language: code });
     };
 
     // Navigasi dari dalam drawer harus menutup drawer-nya, kalau tidak overlay
@@ -144,6 +237,8 @@ const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
         wasOpen.current = open;
     }, [open]);
 
+    const initial = (username || name || '?').trim().charAt(0).toUpperCase();
+
     return (
         <>
             <SpinnerOverlay visible={isLoggingOut} fixed />
@@ -155,7 +250,7 @@ const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
                 aria-expanded={open}
                 aria-controls={'app-sidebar'}
                 onClick={() => setOpen((value) => !value)}
-                css={tw`xl:hidden fixed top-3 left-3 z-50 flex items-center justify-center w-10 h-10 rounded-md bg-neutral-900 border border-neutral-800 text-neutral-200 shadow-ds-1 transition-colors duration-150 hover:text-white hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400`}
+                css={tw`xl:hidden fixed top-3 left-3 z-50 flex items-center justify-center w-10 h-10 rounded-md bg-surface-card border border-muted text-text-secondary shadow-ds-1 transition-colors duration-150 hover:text-text-primary hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand`}
             >
                 <MaterialIcon name={open ? 'close' : 'menu'} size={20} />
             </button>
@@ -168,48 +263,218 @@ const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
             )}
 
             <Sidebar ref={sidebarRef} id={'app-sidebar'} $open={open} aria-label={'Navigasi utama'}>
-                <div css={tw`flex items-center h-14 px-4 border-b border-neutral-800 flex-shrink-0`}>
-                    <Link
-                        to={'/'}
-                        css={tw`flex items-center gap-2 no-underline rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400`}
+                {/* ---- Kartu pengguna (brief-5) ---- */}
+                <div css={tw`p-3 border-b border-muted flex-shrink-0`}>
+                    <div
+                        css={tw`flex items-center justify-between p-2.5 rounded-xl bg-surface-container-lowest border border-strong`}
                     >
-                        <img src={logo} alt={''} aria-hidden={'true'} css={tw`w-7 h-7 flex-shrink-0 block`} />
-                        <span css={tw`font-semibold text-sm tracking-wide text-neutral-100 truncate`}>{name}</span>
-                    </Link>
+                        <div css={tw`flex items-center gap-2.5 min-w-0`}>
+                            <div
+                                aria-hidden={'true'}
+                                css={tw`w-9 h-9 rounded-full bg-green-600 flex items-center justify-center font-bold text-text-primary text-[15px] flex-shrink-0`}
+                            >
+                                {initial}
+                            </div>
+                            <div css={tw`flex flex-col min-w-0`}>
+                                <span
+                                    css={tw`font-label-md text-label-md font-semibold text-text-primary truncate leading-tight`}
+                                >
+                                    {username}
+                                </span>
+                                <span css={tw`font-label-micro text-label-micro text-text-muted leading-tight`}>
+                                    {rootAdmin ? 'Administrator' : 'Member'}
+                                </span>
+                            </div>
+                        </div>
+                        <button
+                            type={'button'}
+                            onClick={onTriggerLogout}
+                            title={'Sign Out'}
+                            aria-label={'Sign Out'}
+                            css={tw`p-1.5 rounded-lg text-text-muted transition-colors flex-shrink-0 hover:text-danger hover:bg-danger-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand`}
+                        >
+                            <MaterialIcon name={'logout'} size={18} />
+                        </button>
+                    </div>
                 </div>
 
-                <div css={tw`flex-1 flex flex-col overflow-y-auto py-4`}>
-                    <NavList>
-                        <NavItem to={'/'} exact>
-                            <MaterialIcon name={'layers'} size={20} />
-                            Dashboard
-                        </NavItem>
-                        <NavItem to={'/store'} exact>
-                            <MaterialIcon name={'shopping_cart'} size={20} />
-                            Store
-                        </NavItem>
-                        <NavItem to={'/account'}>
-                            <MaterialIcon name={'account_circle'} size={20} />
-                            Account Settings
-                        </NavItem>
-                        {rootAdmin && (
-                            <a href={'/admin'} rel={'noreferrer'}>
-                                <MaterialIcon name={'settings'} size={20} />
-                                Admin Panel
-                            </a>
+                <div css={tw`flex-1 overflow-y-auto px-3 py-3 space-y-4`}>
+                    {/*
+                     * Pill saldo. Belum ada sumber datanya di panel (tidak ada tabel
+                     * saldo/ledger), jadi angkanya tetap "Rp 0" dan barisnya sengaja
+                     * tidak bisa diklik — bukan tombol yang diam-diam tidak melakukan apa-apa.
+                     */}
+                    <div
+                        aria-disabled={'true'}
+                        title={'Saldo belum tersedia di panel ini'}
+                        css={tw`flex items-center justify-between px-3 py-2.5 rounded-xl bg-surface-container-lowest border border-strong`}
+                    >
+                        <div css={tw`flex items-center gap-2.5`}>
+                            <MaterialIcon name={'account_balance_wallet'} size={20} />
+                            <span css={tw`font-label-md text-label-md font-semibold text-text-primary`}>Rp 0</span>
+                        </div>
+                        <MaterialIcon name={'chevron_right'} size={18} />
+                    </div>
+
+                    {/* ---- MENU ---- */}
+                    <div css={tw`space-y-1`}>
+                        <GroupHeader
+                            type={'button'}
+                            onClick={() => toggleGroup('menu')}
+                            aria-expanded={!collapsed.menu}
+                            aria-controls={'sidebar-menu'}
+                        >
+                            <GroupLabel>Menu</GroupLabel>
+                            <MaterialIcon name={collapsed.menu ? 'expand_more' : 'expand_less'} size={16} />
+                        </GroupHeader>
+                        {!collapsed.menu && (
+                            <GroupNav id={'sidebar-menu'}>
+                                <NavLink to={'/'} exact>
+                                    <MaterialIcon name={'grid_view'} size={20} />
+                                    <span>Dashboard</span>
+                                </NavLink>
+                                {/* Console butuh konteks server — dibuka lewat kartu server. */}
+                                <DisabledRow icon={'terminal'} label={'Console'} />
+                                <NavLink to={'/store'} exact>
+                                    <MaterialIcon name={'shopping_cart'} size={20} />
+                                    <span>New Services</span>
+                                </NavLink>
+                                {/* SearchContainer tetap di sini; gayanya ikut NavRow. */}
+                                <SearchContainer label={'Cari Server'} />
+                                {rootAdmin && (
+                                    <a href={'/admin'} rel={'noreferrer'}>
+                                        <MaterialIcon name={'admin_panel_settings'} size={20} />
+                                        <span>Admin Panel</span>
+                                    </a>
+                                )}
+                                <DisabledRow icon={'headset_mic'} label={'Layanan Support'} />
+                                <DisabledRow icon={'menu_book'} label={'Panduan'} />
+                            </GroupNav>
                         )}
-                        <SearchContainer label={'Cari Server'} />
-                    </NavList>
+                    </div>
+
+                    {/* ---- ACCOUNT & WALLET ---- */}
+                    <div css={tw`space-y-1`}>
+                        <GroupHeader
+                            type={'button'}
+                            onClick={() => toggleGroup('account')}
+                            aria-expanded={!collapsed.account}
+                            aria-controls={'sidebar-account'}
+                        >
+                            <GroupLabel>Account &amp; Wallet</GroupLabel>
+                            <MaterialIcon name={collapsed.account ? 'expand_more' : 'expand_less'} size={16} />
+                        </GroupHeader>
+                        {!collapsed.account && (
+                            <GroupNav id={'sidebar-account'}>
+                                <NavLink to={'/account'} exact>
+                                    <MaterialIcon name={'account_circle'} size={20} />
+                                    <span>Profile</span>
+                                </NavLink>
+                                <NavLink to={'/account/billing'} exact>
+                                    <MaterialIcon name={'receipt_long'} size={20} />
+                                    <span>Invoice</span>
+                                </NavLink>
+                                <DisabledRow icon={'account_balance_wallet'} label={'Saldo'} />
+                            </GroupNav>
+                        )}
+                    </div>
+
+                    {/* ---- LAINNYA (semuanya belum punya halaman di panel ini) ---- */}
+                    <div css={tw`space-y-1`}>
+                        <GroupHeader
+                            type={'button'}
+                            onClick={() => toggleGroup('other')}
+                            aria-expanded={!collapsed.other}
+                            aria-controls={'sidebar-other'}
+                        >
+                            <GroupLabel>Lainnya</GroupLabel>
+                            <MaterialIcon name={collapsed.other ? 'expand_more' : 'expand_less'} size={16} />
+                        </GroupHeader>
+                        {!collapsed.other && (
+                            <GroupNav id={'sidebar-other'}>
+                                <DisabledRow icon={'home'} label={'Beranda'} />
+                                <DisabledRow icon={'auto_awesome'} label={'Fitur'} />
+                                <DisabledRow icon={'sell'} label={'Paket Harga'} />
+                                <DisabledRow icon={'help'} label={'FAQ'} />
+                            </GroupNav>
+                        )}
+                    </div>
 
                     {subNavigation}
                 </div>
 
-                <NavList css={tw`py-3 border-t border-neutral-800 flex-shrink-0`}>
-                    <button type={'button'} onClick={onTriggerLogout}>
-                        <MaterialIcon name={'logout'} size={20} />
-                        Sign Out
-                    </button>
-                </NavList>
+                {/* ---- Footer: bahasa, tema, bantuan ---- */}
+                <div css={tw`p-3 border-t border-muted flex-shrink-0`}>
+                    <div
+                        css={tw`p-3 rounded-xl bg-surface-container-lowest border border-strong space-y-3`}
+                    >
+                        <div css={tw`flex items-center justify-between`}>
+                            <span css={tw`font-label-sm text-label-sm text-text-muted`}>Bahasa</span>
+                            <div
+                                role={'group'}
+                                aria-label={'Pilih bahasa'}
+                                css={tw`flex items-center bg-surface-container-high rounded-lg p-0.5 gap-0.5`}
+                            >
+                                {LANGUAGES.map((item) => (
+                                    <button
+                                        key={item.code}
+                                        type={'button'}
+                                        onClick={() => changeLanguage(item.code)}
+                                        aria-pressed={language === item.code}
+                                        css={classNames(
+                                            'px-2 py-0.5 rounded text-[11px]',
+                                            language === item.code
+                                                ? 'font-bold bg-text-primary text-surface-base shadow-sm'
+                                                : 'font-medium text-text-muted hover:text-text-primary'
+                                        )}
+                                    >
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div css={tw`flex items-center justify-between`}>
+                            <span css={tw`font-label-sm text-label-sm text-text-muted`}>Tampilan</span>
+                            <div css={tw`flex items-center gap-2`}>
+                                <span css={tw`font-label-sm text-label-sm text-text-secondary font-medium`}>
+                                    {light ? 'Light' : 'Dark'}
+                                </span>
+                                <label css={tw`relative inline-flex cursor-pointer items-center`}>
+                                    <input
+                                        type={'checkbox'}
+                                        className={'peer sr-only'}
+                                        checked={light}
+                                        onChange={(e) => setLight(e.target.checked)}
+                                        aria-label={'Aktifkan mode terang'}
+                                    />
+                                    <div
+                                        aria-hidden={'true'}
+                                        css={tw`relative h-5 w-9 rounded-full bg-surface-container-highest transition-colors peer-checked:bg-cyan-600 after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:bg-text-primary after:transition-all peer-checked:after:translate-x-4`}
+                                    />
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Belum ada nomor/link WhatsApp yang diberikan, jadi barisnya mati. */}
+                        <button
+                            type={'button'}
+                            aria-disabled={'true'}
+                            title={'Nomor WhatsApp CS belum diatur'}
+                            css={tw`w-full pt-2 border-t border-strong flex items-center justify-between text-left bg-transparent border-0 cursor-not-allowed opacity-40`}
+                        >
+                            <div css={tw`flex flex-col`}>
+                                <span css={tw`font-label-sm text-label-sm font-semibold text-text-primary`}>
+                                    Butuh Bantuan?
+                                </span>
+                                <span css={tw`font-label-micro text-label-micro text-text-muted`}>
+                                    Hubungi CS via WhatsApp
+                                </span>
+                            </div>
+                            <MaterialIcon name={'chevron_right'} size={18} />
+                        </button>
+                    </div>
+                </div>
             </Sidebar>
 
             {/* pt-14 di mobile memberi ruang untuk tombol hamburger yang fixed. */}
@@ -222,7 +487,7 @@ const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
                  */}
                 <TopHeader css={tw`pl-16 xl:pl-4`}>
                     <div css={tw`flex items-center gap-3 min-w-0`}>
-                        <span css={tw`text-2xs uppercase tracking-wider text-neutral-500 font-medium flex-shrink-0`}>
+                        <span css={tw`text-2xs uppercase tracking-wider text-text-muted font-medium flex-shrink-0`}>
                             {node ? 'Cluster' : 'Panel'}
                         </span>
                         <ClusterBadge
@@ -233,7 +498,7 @@ const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
                                 css={
                                     node
                                         ? tw`w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0`
-                                        : tw`w-1.5 h-1.5 rounded-full bg-neutral-600 flex-shrink-0`
+                                        : tw`w-1.5 h-1.5 rounded-full bg-text-muted flex-shrink-0`
                                 }
                             />
                             <span css={tw`truncate max-w-[12rem]`}>{node || name}</span>

@@ -88,6 +88,64 @@ export default createGlobalStyle`
     }
 
     /*
+     * brief-5 — mode terang.
+     *
+     * Token Tailwind (surface-*, text-*, border-*) dikompilasi jadi nilai gelap
+     * yang tetap, jadi agar tombol tema benar-benar mengubah SELURUH panel,
+     * nilainya dijadikan custom property di tailwind.config.js (mis. warna
+     * surface-card memakai var(--z0ne-surface-card) dengan fallback gelap).
+     * Blok di bawah ini menimpa variabelnya; fallback di config membuat mode
+     * gelap tetap utuh meski stylesheet ini belum termuat.
+     *
+     * Hanya token brief yang punya padanan terang. Palet lama (neutral-*,
+     * primary-* blue ramp) sengaja tidak disentuh supaya layar di luar scope
+     * tidak berubah warna.
+     */
+    html.light {
+        --z0ne-surface-base: 244 244 245;
+        --z0ne-surface-muted: 244 244 245;
+        --z0ne-surface-dim: 244 244 245;
+        --z0ne-surface-strong: 255 255 255;
+        --z0ne-surface-card: 255 255 255;
+        --z0ne-surface-header: 255 255 255;
+        --z0ne-surface-hover: 244 244 245;
+        --z0ne-surface-active: 228 228 231;
+        --z0ne-surface-container-lowest: 250 250 250;
+        --z0ne-surface-container-low: 244 244 245;
+        --z0ne-surface-container: 244 244 245;
+        --z0ne-surface-container-high: 228 228 231;
+        --z0ne-surface-container-highest: 212 212 216;
+
+        --z0ne-text-primary: 9 9 11;
+        --z0ne-text-secondary: 82 82 91;
+        --z0ne-text-tertiary: 24 24 27;
+        --z0ne-text-muted: 113 113 122;
+
+        --z0ne-on-surface: 9 9 11;
+        --z0ne-on-surface-variant: 82 82 91;
+
+        --z0ne-border-default: 212 212 216;
+        --z0ne-border-muted: 228 228 231;
+        --z0ne-border-strong: 161 161 170;
+
+        /*
+         * Ramp netral lama (dipakai layar di luar keempat brief). Langkahnya
+         * ditukar ujung-ke-ujung — 900 jadi paling terang dan 50 jadi paling
+         * gelap — supaya latar netral-900 berhenti jadi kotak hitam dan
+         * teks netral-100 berhenti jadi putih. Dua langkah tengah (400/500)
+         * sengaja dibiarkan: kontrasnya sudah cukup di dua tema.
+         */
+        --z0ne-neutral-50: 20 41 62;
+        --z0ne-neutral-100: 51 64 77;
+        --z0ne-neutral-200: 63 77 90;
+        --z0ne-neutral-300: 81 95 108;
+        --z0ne-neutral-600: 154 165 177;
+        --z0ne-neutral-700: 202 209 216;
+        --z0ne-neutral-800: 229 232 235;
+        --z0ne-neutral-900: 245 247 250;
+    }
+
+    /*
      * Animated Grid Background — token.
      *
      * Warna garis dan cyan dipakai eksplisit, bukan token --z0ne-*: palet itu
@@ -152,8 +210,8 @@ export default createGlobalStyle`
     }
 
     body {
-        background-color: var(--z0ne-surface-base, #09090b) !important;
-        color: var(--z0ne-text-primary, #fafafa);
+        background-color: rgb(var(--z0ne-surface-base, 9 9 11)) !important;
+        color: rgb(var(--z0ne-text-primary, 250 250 250));
         letter-spacing: 0.015em;
         font-family: 'Outfit', system-ui, sans-serif;
     }
