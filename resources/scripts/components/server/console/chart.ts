@@ -45,13 +45,17 @@ const options: ChartOptions<'line'> = {
             type: 'linear',
             grid: {
                 display: true,
-                color: theme('colors.gray.700'),
+                // Hex konkret, bukan theme(): token gray/neutral kini
+                // `rgb(var(...) / <alpha-value>)` dan helper theme() tidak
+                // mengganti placeholder itu, sehingga canvas menerima string
+                // tak valid dan garis grid menghilang.
+                color: '#3f4d5a',
                 drawBorder: false,
             },
             ticks: {
                 display: true,
                 count: 3,
-                color: theme('colors.gray.200'),
+                color: '#cad1d8',
                 font: {
                     family: theme('fontFamily.sans'),
                     size: 11,
@@ -91,8 +95,8 @@ function getEmptyData(label: string, sets = 1, callback?: ChartDatasetCallback |
                         fill: true,
                         label,
                         data: Array(20).fill(-5),
-                        borderColor: theme('colors.cyan.400'),
-                        backgroundColor: hexToRgba(theme('colors.cyan.700'), 0.5),
+                        borderColor: '#22d3ee',
+                        backgroundColor: hexToRgba('#0e7490', 0.5),
                     },
                     index
                 )

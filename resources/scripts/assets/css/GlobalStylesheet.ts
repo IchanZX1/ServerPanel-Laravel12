@@ -111,7 +111,18 @@ export default createGlobalStyle`
      * adanya sebagai "html{&.light{...}" dan seluruh aturan itu diabaikan
      * peramban — inilah yang dulu membuat tombol tema terlihat tidak bekerja.
      */
+    /*
+     * color-scheme memberitahu peramban widget bawaan (dropdown select,
+     * date/time picker, autofill, scrollbar) mengikuti tema aktif. Tanpa ini
+     * select di mode terang membuka popup gelap khas Chrome.
+     */
+    :root {
+        color-scheme: dark;
+    }
+
     html.light {
+        color-scheme: light;
+
         --app-surface-base: 244 244 245;
         --app-surface-muted: 244 244 245;
         --app-surface-dim: 244 244 245;
@@ -230,6 +241,18 @@ export default createGlobalStyle`
          * dan teks — properti lain (transform, dst.) tidak ikut teranimasi.
          */
         transition: background-color 200ms ease, color 200ms ease;
+    }
+
+    /*
+     * Widget bawaan peramban membaca color-scheme dari body, bukan html —
+     * itu sebabnya blok terpisah ini diperlukan meski :root/html sudah benar.
+     */
+    body {
+        color-scheme: dark;
+    }
+
+    html.light body {
+        color-scheme: light;
     }
 
     h1, h2, h3, h4, h5, h6 {

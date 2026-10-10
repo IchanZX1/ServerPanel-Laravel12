@@ -7,22 +7,22 @@ export interface Props {
 }
 
 const light = css<Props>`
-    ${tw`bg-white border-neutral-200 text-neutral-800`};
+    ${tw`bg-white border-neutral-400 text-neutral-900`};
     &:focus {
         ${tw`border-primary-400`}
     }
 
     &:focus-visible {
-        ${tw`outline-none ring-2 ring-primary-400 ring-offset-1 ring-offset-neutral-900`};
+        ${tw`outline-none ring-2 ring-primary-400 ring-offset-1 ring-offset-neutral-100`};
     }
 
     &:disabled {
-        ${tw`bg-neutral-100 border-neutral-200`};
+        ${tw`bg-neutral-100 border-neutral-300`};
     }
 `;
 
 const checkboxStyle = css<Props>`
-    ${tw`bg-neutral-500 cursor-pointer appearance-none inline-block align-middle select-none flex-shrink-0 w-4 h-4 text-primary-400 border border-neutral-300 rounded-sm`};
+    ${tw`bg-surface-container-high cursor-pointer appearance-none inline-block align-middle select-none flex-shrink-0 w-4 h-4 text-brand border border-strong rounded-sm`};
     color-adjust: exact;
     background-origin: border-box;
     transition: all 75ms linear, box-shadow 25ms linear;
@@ -35,7 +35,7 @@ const checkboxStyle = css<Props>`
     }
 
     &:focus {
-        ${tw`outline-none border-primary-300`};
+        ${tw`outline-none border-brand`};
         box-shadow: 0 0 0 1px rgba(9, 103, 210, 0.25);
     }
 `;
@@ -45,11 +45,21 @@ const inputStyle = css<Props>`
     resize: none;
     ${tw`appearance-none outline-none w-full min-w-0`};
     ${tw`p-3 border rounded-lg text-sm transition-all duration-150`};
-    ${tw`bg-neutral-900/90 border-neutral-800 hover:border-neutral-700 text-neutral-100 shadow-sm`};
+    /*
+     * Token semantik, BUKAN ramp neutral-*.
+     *
+     * Sebelumnya di sini tertulis bg-neutral-900/90 + text-neutral-100.
+     * Ramp netral dibalik di mode terang (lihat html.light di
+     * GlobalStylesheet.ts), jadi kedua kelas itu ikut jadi terang dan teksnya
+     * lenyap di atas latar putih. Token surface/text/border tidak punya
+     * masalah itu karena nilainya memang dikelola per-tema.
+     */
+    ${tw`bg-surface-container-lowest border-strong text-text-primary placeholder:text-text-muted shadow-sm`};
+    ${tw`hover:border-default`};
 
     & + .input-help {
         ${tw`mt-1.5 text-xs`};
-        ${(props) => (props.hasError ? tw`text-red-400 font-medium` : tw`text-neutral-400`)};
+        ${(props) => (props.hasError ? tw`text-red-400 font-medium` : tw`text-text-muted`)};
     }
 
     &:required,
@@ -63,7 +73,7 @@ const inputStyle = css<Props>`
     }
 
     &:disabled {
-        ${tw`opacity-60 cursor-not-allowed bg-neutral-900`};
+        ${tw`opacity-60 cursor-not-allowed bg-surface-container`};
     }
 
     ${(props) => props.isLight && light};

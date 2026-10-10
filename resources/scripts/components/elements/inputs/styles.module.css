@@ -1,22 +1,45 @@
+/*
+ * Catatan penting: kelas `form-input` bawaan @tailwindcss/forms SENGAJA tidak
+ * dipakai lagi di InputField/Checkbox.
+ *
+ * Plugin itu menulis `background-color: #fff` plus
+ * `color: theme('colors.gray.900')`. Sejak ramp abu-abu di tailwind.config.js
+ * jadi `rgb(var(--app-*) / <alpha-value>)`, pembacaan theme() di plugin tidak
+ * ikut mengganti placeholder <alpha-value>, sehingga deklarasi warnanya tidak
+ * valid dan DIBUANG peramban — sisanya cuma latar putih tetap. Hasilnya teks
+ * terang (warisan) di atas latar putih: tidak terbaca, terutama di mode gelap.
+ *
+ * Karena itu gaya di bawah ditulis utuh sendiri dengan token yang bisa
+ * berpindah tema (surface/text/border) — bukan mengandalkan plugin.
+ */
 .checkbox_input {
-    @apply w-4 h-4 rounded-sm border-neutral-500 bg-neutral-600 text-primary-500;
+    @apply w-4 h-4 rounded-sm appearance-none cursor-pointer align-middle;
+    @apply bg-surface-container-high border border-strong text-brand;
+
+    background-origin: border-box;
+    color-adjust: exact;
 
     &:focus, &:active {
-        @apply ring-2 ring-primary-500 ring-offset-2 ring-offset-neutral-700;
+        @apply ring-2 ring-brand ring-offset-2 ring-offset-surface-card;
     }
 
     &.indeterminate:checked {
-        @apply text-primary-500/50 border border-primary-500;
+        @apply text-brand border border-brand;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3E%3Cpath fill-rule='evenodd' d='M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z' clip-rule='evenodd' /%3E%3C/svg%3E");
     }
 }
 
 .text_input {
-    @apply transition-shadow duration-75;
-    @apply w-full bg-neutral-800 rounded px-4 py-2 outline-none border-0;
+    @apply transition-colors duration-75;
+    @apply w-full bg-surface-container-lowest text-text-primary rounded px-4 py-2 outline-none border border-strong;
+    @apply placeholder:text-text-muted;
 
     &:focus, &:active {
-        @apply ring-4 ring-blue-300 ring-opacity-75;
+        @apply ring-2 ring-brand/60 border-brand;
+    }
+
+    &:disabled {
+        @apply opacity-60 cursor-not-allowed;
     }
 
     &.loose {

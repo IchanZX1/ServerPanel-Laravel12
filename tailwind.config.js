@@ -211,7 +211,19 @@ module.exports = {
                 300: '300ms',
             },
             borderColor: theme => ({
-                default: theme('colors.neutral.400', 'currentColor'),
+                /*
+                 * WAJIB hex konkret, bukan theme('colors.neutral.400').
+                 *
+                 * Sejak ramp neutral jadi `rgb(var(--app-neutral-400) / <alpha-value>)`,
+                 * pembacaan token lewat helper theme() TIDAK ikut mengganti
+                 * <alpha-value> (hanya utility Tailwind terkompilasi yang
+                 * diganti). Nilai mentah itu bocor ke preflight Tailwind
+                 * (`*, ::before, ::after { border-color: ... }`) sehingga
+                 * SELURUH border di panel dianggap CSS tidak valid dan jatuh
+                 * ke transparan. Nilai di bawah = hsl(210, 24%, 16%) lama,
+                 * dibulatkan ke kanal RGB yang sama dengan --app-neutral-400.
+                 */
+                default: 'rgb(123 135 147 / var(--tw-border-opacity, 1))',
                 // DESIGN.md — border.muted/strong. `border-strong` dipakai brief
                 // untuk tepi yang lebih tegas, `border-muted` untuk pemisah halus.
                 // Lewat var() juga, supaya garis pemisah ikut berubah di mode terang.

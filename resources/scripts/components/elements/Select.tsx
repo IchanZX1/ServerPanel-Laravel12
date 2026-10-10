@@ -28,11 +28,16 @@ const Select = styled.select<Props>`
     ${(props) =>
         !props.hideDropdownArrow &&
         css`
-            ${tw`bg-neutral-900/90 border-neutral-800 text-neutral-100`};
+            /*
+             * Token semantik, bukan bg-neutral-900/90 + text-neutral-100.
+             * Ramp netral dibalik di mode terang sehingga teksnya hilang di
+             * atas latar putih — sama seperti Input.tsx.
+             */
+            ${tw`bg-surface-container-lowest border-strong text-text-primary`};
             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='%23C3D1DF' d='M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z'/%3e%3c/svg%3e ");
 
             &:hover:not(:disabled) {
-                ${tw`border-neutral-700`};
+                ${tw`border-default`};
             }
 
             &:focus {

@@ -13,7 +13,8 @@ const Component = forwardRef<HTMLInputElement, React.ComponentProps<'input'> & {
         <input
             ref={ref}
             className={classNames(
-                'form-input',
+                // 'form-input' bawaan plugin TIDAK dipakai: latarnya putih tetap
+                // dan warnanya tidak ikut tema. Lihat catatan di styles.module.css.
                 styles.text_input,
                 { [styles.loose]: variant === Variant.Loose },
                 className
