@@ -51,7 +51,7 @@ const Card = styled.div<{ $status: ServerPowerState | undefined }>`
 `;
 
 const Tile = styled.div`
-    ${tw`flex flex-col rounded-lg bg-surface-container-lowest/60 p-2.5`};
+    ${tw`flex flex-col rounded-lg bg-surface-container-lowest p-2.5`};
 `;
 
 const TileHead = styled.div`

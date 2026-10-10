@@ -33,7 +33,7 @@ const INFRA = [
 /** Baris spesifikasi di dalam blok data kartu paket. */
 const SpecRow = ({ icon, label, value }: { icon: string; label: string; value: string }) => (
     <div
-        css={tw`flex justify-between items-center font-mono font-body-sm text-body-sm py-1 border-b border-muted/30 last:border-0`}
+        css={tw`flex justify-between items-center font-mono font-body-sm text-body-sm py-1 border-b border-muted last:border-0`}
     >
         <span css={tw`text-text-muted flex items-center gap-1.5`}>
             <MaterialIcon name={icon} size={15} css={tw`text-cyan-400`} />

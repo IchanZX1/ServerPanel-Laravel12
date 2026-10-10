@@ -32,7 +32,7 @@ const SubNavigation = styled.div<{ $vertical?: boolean }>`
 
             &:hover {
                 ${(props) =>
-                    props.$vertical ? tw`text-neutral-100 bg-neutral-800/80` : tw`text-on-surface bg-surface-hover`};
+                    props.$vertical ? tw`text-neutral-100 bg-neutral-800` : tw`text-on-surface bg-surface-hover`};
             }
 
             &:focus-visible {

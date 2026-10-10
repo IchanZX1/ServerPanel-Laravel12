@@ -3,19 +3,26 @@ const colors = require('tailwindcss/colors');
 /*
  * Warna yang bisa berpindah tema.
  *
- * Bentuknya `rgb(var(--nama, R G B) / <alpha-value>)`, bukan hex biasa:
+ * Penting — kenapa TIDAK memakai `<alpha-value>`:
  *
- *  - `var()` supaya blok `html.light` di GlobalStylesheet.ts bisa menimpanya —
- *    itulah yang membuat tombol tema brief-5 mengubah SELURUH panel, bukan
- *    cuma sidebar.
- *  - fallback `R G B` di dalam var() adalah nilai mode gelap semula, sehingga
- *    mode gelap tidak bergeser sedikit pun (dan tetap benar meski stylesheet
- *    tema belum termuat).
- *  - kanal dipisah, bukan `hsl(...)`/`#hex`, karena Tailwind hanya bisa
- *    menurunkan alpha (`bg-neutral-800/60`) kalau warnanya berupa kanal.
- *    Tanpa itu setiap kelas ber-alpha gagal dikompilasi.
+ * Bentuk kanonik Tailwind untuk warna berbasis kanal adalah
+ * `rgb(var(--x, R G B) / <alpha-value>)`, dan itu memang benar untuk kelas
+ * utility (bg-neutral-900/90) karena Tailwind mengganti placeholder-nya saat
+ * mengompilasi.
+ *
+ * Masalahnya twin.macro: ia membaca token ini langsung dan menuliskan
+ * string-nya apa adanya ke CSS-in-JS, TANPA mengganti `<alpha-value>`
+ * (bahkan pada pemakaian tanpa modifier alpha, seperti
+ * tw`text-neutral-200`). Akibatnya seluruh deklarasi warna dari tw`` /
+ * styled-components jadi tidak valid dan DIBUANG peramban — border dan latar
+ * hilang, teks lenyap. Ini penyebab bug "semua border transparan".
+ *
+ * Tanpa `<alpha-value>`, nilai di bawah selalu CSS yang sah di kedua jalur.
+ * Konsekuensinya: modifier alpha (`bg-neutral-900/90`) tidak lagi dihasilkan
+ * Tailwind untuk token ini, jadi pemakaian seperti itu harus memakai token
+ * solid — sudah dilakukan di komponen terkait.
  */
-const tone = (name, channels) => `rgb(var(${name}, ${channels}) / <alpha-value>)`;
+const tone = (name, channels) => `rgb(var(${name}, ${channels}))`;
 
 /*
  * Ramp netral panel. Nilai kanalnya sama dengan hsl() lama

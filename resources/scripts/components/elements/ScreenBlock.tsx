@@ -44,7 +44,7 @@ const ScreenBlock = ({ title, image, message, onBack, onRetry }: ScreenBlockProp
     <PageContentBlock>
         <div css={tw`flex justify-center`}>
             <div
-                css={tw`w-full sm:w-3/4 md:w-1/2 p-8 md:p-14 bg-neutral-900/90 border border-neutral-800/80 rounded-xl shadow-2xl text-center relative backdrop-blur-sm`}
+                css={tw`w-full sm:w-3/4 md:w-1/2 p-8 md:p-14 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl text-center relative backdrop-blur-sm`}
             >
                 {(typeof onBack === 'function' || typeof onRetry === 'function') && (
                     <div css={tw`absolute left-0 top-0 ml-4 mt-4`}>
