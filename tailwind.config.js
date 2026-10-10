@@ -109,10 +109,13 @@ module.exports = {
                  * Permukaan. `surface-base` = background halaman, `-card` = kartu,
                  * `-header` = bar header/modal, `container-*` = blok bersarang.
                  *
-                 * Nilainya var() tanpa fallback; nilai gelapnya ada di `:root`
-                 * GlobalStylesheet.ts. Tombol tema di sidebar (brief-5)
-                 * mengganti kelas `light` di <html>, dan blok `html.light`
-                 * menimpa variabel-variabel ini supaya SELURUH panel berubah.
+                 * Bentuk penuh `rgb(var(--app-surface-base) / <alpha-value>)` sengaja
+                 * dipakai di sini. Itu membuat warna ini kompatibel dengan
+                 * modifier alpha Tailwind (`bg-surface-card/60`), dan
+                 * `<alpha-value>` tetap aman karena token permukaan hanya
+                 * dipakai lewat utility class / `@apply` — TIDAK lewat `tw\`\``.
+                 * Token `neutral-*` di atas justru wajib tanpa placeholder itu
+                 * karena twin.macro menyalinnya mentah ke CSS-in-JS.
                  */
                 surface: {
                     base: tone('--app-surface-base'),
@@ -214,14 +217,14 @@ module.exports = {
             },
             borderColor: theme => ({
                 /*
-                 * Hex konkret (123 135 147 = neutral-400 gelap), bukan
-                 * theme('colors.neutral.400').
+                 * Hex konkret (123 135 147 = neutral-400 gelap).
                  *
-                 * Token neutral kini berupa FUNGSI (lihat tone() di atas),
-                 * dan helper theme() mengembalikannya apa adanya tanpa
-                 * memanggil — nilai fungsi itu bocor ke preflight Tailwind
-                 * (`*, ::before, ::after { border-color: ... }`) sehingga
-                 * SELURUH border dianggap tidak valid dan jatuh transparan.
+                 * Token-token di atas adalah string `rgb(var(--app-*))` berisi
+                 * var() — BUKAN nilai warna yang bisa diurai. Pengalaman
+                 * sebelumnya: memanggil theme('colors.neutral.400') di sini
+                 * menuliskan var() mentah ke preflight Tailwind
+                 * (`*, ::before, ::after { border-color: ... }`) sehingga seluruh
+                 * border jatuh transparan. Jangan panggil theme() di sini.
                  */
                 default: '#7b8793',
                 // DESIGN.md — border.muted/strong. `border-strong` dipakai brief
