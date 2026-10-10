@@ -274,7 +274,19 @@ const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
                 aria-expanded={open}
                 aria-controls={'app-sidebar'}
                 onClick={() => setOpen((value) => !value)}
-                css={tw`xl:hidden fixed top-3 left-3 z-50 flex items-center justify-center w-10 h-10 rounded-md bg-surface-card border border-muted text-text-secondary shadow-ds-1 transition-colors duration-150 hover:text-text-primary hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand`}
+                /*
+                 * Saat drawer terbuka, tombol ini TIDAK boleh tetap di kiri atas:
+                 * sidebar (w-64) menempati area itu juga, jadi ikon X-nya menimpa
+                 * kartu pengguna di dalam sidebar. Digeser ke tepi kanan sidebar
+                 * (left-56 = 224px, sisakan 32px) supaya tetap di dalam sidebar
+                 * tapi tidak menutupi apa pun. Transisi `left` dipasang agar
+                 * pergeserannya seirama dengan animasi buka drawer sidebar.
+                 */
+                css={[
+                    tw`xl:hidden fixed top-3 z-50 flex items-center justify-center w-10 h-10 rounded-md bg-surface-card border border-muted text-text-secondary shadow-ds-1 transition-colors duration-150 hover:text-text-primary hover:bg-surface-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-brand`,
+                    open ? tw`left-52` : tw`left-3`,
+                ]}
+                style={{ transitionProperty: 'left, color, background-color' }}
             >
                 <MaterialIcon name={open ? 'close' : 'menu'} size={20} />
             </button>

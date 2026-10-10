@@ -148,6 +148,10 @@
         "firefox esr",
         "not dead"
     ],
+    "resolutions": {
+        "@types/react": "16.14.70",
+        "@fortawesome/fontawesome-common-types": "0.2.36"
+    },
     "babelMacros": {
         "twin": {
             "preset": "styled-components"
