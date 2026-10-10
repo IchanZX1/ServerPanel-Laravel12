@@ -1,0 +1,33 @@
+<?php
+
+return [
+    'permissions' => [
+        'websocket_*' => 'Mengizinkan akses ke websocket untuk server ini.',
+        'control_console' => 'Mengizinkan pengguna mengirim data ke konsol server.',
+        'control_start' => 'Mengizinkan pengguna menyalakan instance server.',
+        'control_stop' => 'Mengizinkan pengguna mematikan instance server.',
+        'control_restart' => 'Mengizinkan pengguna memulai ulang instance server.',
+        'control_kill' => 'Mengizinkan pengguna menghentikan paksa instance server.',
+        'user_create' => 'Mengizinkan pengguna membuat akun pengguna baru untuk server.',
+        'user_read' => 'Mengizinkan pengguna melihat pengguna yang terkait dengan server ini.',
+        'user_update' => 'Mengizinkan pengguna mengubah pengguna lain yang terkait dengan server ini.',
+        'user_delete' => 'Mengizinkan pengguna menghapus pengguna lain yang terkait dengan server ini.',
+        'file_create' => 'Mengizinkan pengguna membuat berkas dan direktori baru.',
+        'file_read' => 'Mengizinkan pengguna melihat berkas dan folder yang terkait dengan instance server ini, serta melihat isinya.',
+        'file_update' => 'Mengizinkan pengguna memperbarui berkas dan folder yang terkait dengan server.',
+        'file_delete' => 'Mengizinkan pengguna menghapus berkas dan direktori.',
+        'file_archive' => 'Mengizinkan pengguna membuat arsip berkas dan mengekstrak arsip yang ada.',
+        'file_sftp' => 'Mengizinkan pengguna melakukan aksi berkas di atas menggunakan klien SFTP.',
+        'allocation_read' => 'Mengizinkan akses ke halaman pengelolaan alokasi server.',
+        'allocation_update' => 'Mengizinkan pengguna melakukan perubahan pada alokasi server.',
+        'database_create' => 'Mengizinkan pengguna membuat basis data baru untuk server.',
+        'database_read' => 'Mengizinkan pengguna melihat basis data server.',
+        'database_update' => 'Mengizinkan pengguna melakukan perubahan pada basis data. Jika pengguna tidak juga memiliki izin "Lihat Kata Sandi", mereka tidak akan dapat mengubah kata sandinya.',
+        'database_delete' => 'Mengizinkan pengguna menghapus instance basis data.',
+        'database_view_password' => 'Mengizinkan pengguna melihat kata sandi basis data di sistem.',
+        'schedule_create' => 'Mengizinkan pengguna membuat jadwal baru untuk server.',
+        'schedule_read' => 'Mengizinkan pengguna melihat jadwal untuk server.',
+        'schedule_update' => 'Mengizinkan pengguna melakukan perubahan pada jadwal server yang sudah ada.',
+        'schedule_delete' => 'Mengizinkan pengguna menghapus jadwal untuk server.',
+    ],
+];

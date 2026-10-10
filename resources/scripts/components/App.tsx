@@ -15,6 +15,8 @@ import AuthenticatedRoute from '@/components/elements/AuthenticatedRoute';
 import { ServerContext } from '@/state/server';
 import '@/assets/tailwind.css';
 import Spinner from '@/components/elements/Spinner';
+import i18n from '@/i18n';
+import { applyTheme, getStoredLanguage, getStoredTheme, setStoredLanguage } from '@/appearance';
 
 const DashboardRouter = lazy(() => import(/* webpackChunkName: "dashboard" */ '@/routers/DashboardRouter'));
 const ServerRouter = lazy(() => import(/* webpackChunkName: "server" */ '@/routers/ServerRouter'));
@@ -41,6 +43,24 @@ setupInterceptors(history);
 
 const App = () => {
     const { PterodactylUser, SiteConfiguration } = window as ExtendedWindow;
+
+    /*
+     * brief-5 — samakan bahasa antarmuka dengan bahasa akun.
+     *
+     * Prioritasnya: bahasa yang tersimpan di server (kolom `language` tabel
+     * users) menang atas pilihan lokal, supaya pilihan ikut terbawa saat
+     * pengguna berganti perangkat. Kalau server tidak mengirim bahasa,
+     * i18n sudah memakai pilihan lokal (lihat i18n.ts), jadi tidak ada yang
+     * perlu dilakukan.
+     */
+    if (PterodactylUser && PterodactylUser.language && PterodactylUser.language !== getStoredLanguage()) {
+        setStoredLanguage(PterodactylUser.language);
+        i18n.changeLanguage(PterodactylUser.language);
+    }
+
+    /* Pastikan kelas tema terpasang meski modul theme.ts belum sempat dieksekusi. */
+    applyTheme(getStoredTheme());
+
     if (PterodactylUser && !store.getState().user.data) {
         store.getActions().user.setUserData({
             uuid: PterodactylUser.uuid,

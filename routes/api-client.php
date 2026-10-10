@@ -33,6 +33,11 @@ Route::prefix('/account')->middleware(AccountSubject::class)->group(function () 
         ->name('api:client.account.update-email');
     Route::put('/password', [Client\AccountController::class, 'updatePassword'])->name('api:client.account.update-password');
 
+    // brief-5 — tombol bahasa di footer sidebar. Terpisah dari /email dan
+    // /password karena tidak butuh konfirmasi kata sandi: mengganti bahasa
+    // tidak mengubah identitas maupun keamanan akun.
+    Route::put('/language', [Client\AccountController::class, 'updateLanguage'])->name('api:client.account.update-language');
+
     Route::get('/activity', Client\ActivityLogController::class)->name('api:client.account.activity');
 
     Route::get('/api-keys', [Client\ApiKeyController::class, 'index']);

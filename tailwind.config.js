@@ -22,16 +22,16 @@ const tone = (name, channels) => `rgb(var(${name}, ${channels}) / <alpha-value>)
  * (hsl(210, 24%, 16%) = 20 41 62) — cuma ditulis sebagai kanal RGB.
  */
 const neutral = {
-    50: tone('--z0ne-neutral-50', '245 247 250'),
-    100: tone('--z0ne-neutral-100', '229 232 235'),
-    200: tone('--z0ne-neutral-200', '202 209 216'),
-    300: tone('--z0ne-neutral-300', '154 165 177'),
-    400: tone('--z0ne-neutral-400', '123 135 147'),
-    500: tone('--z0ne-neutral-500', '96 109 123'),
-    600: tone('--z0ne-neutral-600', '81 95 108'),
-    700: tone('--z0ne-neutral-700', '63 77 90'),
-    800: tone('--z0ne-neutral-800', '51 64 77'),
-    900: tone('--z0ne-neutral-900', '20 41 62'),
+    50: tone('--app-neutral-50', '245 247 250'),
+    100: tone('--app-neutral-100', '229 232 235'),
+    200: tone('--app-neutral-200', '202 209 216'),
+    300: tone('--app-neutral-300', '154 165 177'),
+    400: tone('--app-neutral-400', '123 135 147'),
+    500: tone('--app-neutral-500', '96 109 123'),
+    600: tone('--app-neutral-600', '81 95 108'),
+    700: tone('--app-neutral-700', '63 77 90'),
+    800: tone('--app-neutral-800', '51 64 77'),
+    900: tone('--app-neutral-900', '20 41 62'),
 };
 
 const gray = neutral;
@@ -96,8 +96,8 @@ module.exports = {
                     container: '#06b6d4',
                 },
                 'on-primary': '#003640',
-                'on-surface': tone('--z0ne-on-surface', '228 225 230'),
-                'on-surface-variant': tone('--z0ne-on-surface-variant', '188 201 205'),
+                'on-surface': tone('--app-on-surface', '228 225 230'),
+                'on-surface-variant': tone('--app-on-surface-variant', '188 201 205'),
                 error: '#ffb4ab',
 
                 /*
@@ -113,19 +113,19 @@ module.exports = {
                  * jadi tidak ada regresi pada mode gelap.
                  */
                 surface: {
-                    base: tone('--z0ne-surface-base', '9 9 11'),
-                    muted: tone('--z0ne-surface-muted', '19 19 22'),
-                    dim: tone('--z0ne-surface-dim', '19 19 22'),
-                    strong: tone('--z0ne-surface-strong', '23 23 27'),
-                    card: tone('--z0ne-surface-card', '20 20 24'),
-                    header: tone('--z0ne-surface-header', '28 28 34'),
-                    hover: tone('--z0ne-surface-hover', '34 34 42'),
-                    active: tone('--z0ne-surface-active', '42 42 53'),
-                    'container-lowest': tone('--z0ne-surface-container-lowest', '14 14 17'),
-                    'container-low': tone('--z0ne-surface-container-low', '27 27 30'),
-                    container: tone('--z0ne-surface-container', '31 31 34'),
-                    'container-high': tone('--z0ne-surface-container-high', '42 42 45'),
-                    'container-highest': tone('--z0ne-surface-container-highest', '53 52 56'),
+                    base: tone('--app-surface-base', '9 9 11'),
+                    muted: tone('--app-surface-muted', '19 19 22'),
+                    dim: tone('--app-surface-dim', '19 19 22'),
+                    strong: tone('--app-surface-strong', '23 23 27'),
+                    card: tone('--app-surface-card', '20 20 24'),
+                    header: tone('--app-surface-header', '28 28 34'),
+                    hover: tone('--app-surface-hover', '34 34 42'),
+                    active: tone('--app-surface-active', '42 42 53'),
+                    'container-lowest': tone('--app-surface-container-lowest', '14 14 17'),
+                    'container-low': tone('--app-surface-container-low', '27 27 30'),
+                    container: tone('--app-surface-container', '31 31 34'),
+                    'container-high': tone('--app-surface-container-high', '42 42 45'),
+                    'container-highest': tone('--app-surface-container-highest', '53 52 56'),
                 },
 
                 // Teks. Dipakai sebagai `text-text-primary` — brief menamai
@@ -133,10 +133,10 @@ module.exports = {
                 // warna `primary` (ramp blue) di atas. Sama seperti permukaan,
                 // nilainya bisa ditimpa mode terang.
                 text: {
-                    primary: tone('--z0ne-text-primary', '250 250 250'),
-                    secondary: tone('--z0ne-text-secondary', '161 161 170'),
-                    tertiary: tone('--z0ne-text-tertiary', '228 228 231'),
-                    muted: tone('--z0ne-text-muted', '113 113 122'),
+                    primary: tone('--app-text-primary', '250 250 250'),
+                    secondary: tone('--app-text-secondary', '161 161 170'),
+                    tertiary: tone('--app-text-tertiary', '228 228 231'),
+                    muted: tone('--app-text-muted', '113 113 122'),
                 },
 
                 // Status + varian latar transparannya.
@@ -154,9 +154,9 @@ module.exports = {
                  * (`bg-border-muted`) warna itu juga perlu terdaftar di sini.
                  */
                 border: {
-                    DEFAULT: tone('--z0ne-border-default', '63 63 70'),
-                    muted: tone('--z0ne-border-muted', '41 41 47'),
-                    strong: tone('--z0ne-border-strong', '63 63 70'),
+                    DEFAULT: tone('--app-border-default', '63 63 70'),
+                    muted: tone('--app-border-muted', '41 41 47'),
+                    strong: tone('--app-border-strong', '63 63 70'),
                 },
             },
             fontSize: {
@@ -215,8 +215,8 @@ module.exports = {
                 // DESIGN.md — border.muted/strong. `border-strong` dipakai brief
                 // untuk tepi yang lebih tegas, `border-muted` untuk pemisah halus.
                 // Lewat var() juga, supaya garis pemisah ikut berubah di mode terang.
-                muted: tone('--z0ne-border-muted', '41 41 47'),
-                strong: tone('--z0ne-border-strong', '63 63 70'),
+                muted: tone('--app-border-muted', '41 41 47'),
+                strong: tone('--app-border-strong', '63 63 70'),
             }),
         },
     },

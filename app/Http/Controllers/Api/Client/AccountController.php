@@ -12,6 +12,7 @@ use Pterodactyl\Services\Users\UserUpdateService;
 use Pterodactyl\Transformers\Api\Client\AccountTransformer;
 use Pterodactyl\Http\Requests\Api\Client\Account\UpdateEmailRequest;
 use Pterodactyl\Http\Requests\Api\Client\Account\UpdatePasswordRequest;
+use Pterodactyl\Http\Requests\Api\Client\Account\UpdateAccountLanguageRequest;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 class AccountController extends ClientApiController
@@ -57,6 +58,32 @@ class AccountController extends ClientApiController
 
             Activity::event('user:account.email-changed')
                 ->property(['old' => $original, 'new' => $request->validated('email')])
+                ->log();
+        }
+
+        return new JsonResponse([], Response::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * brief-5 — simpan bahasa akun.
+     *
+     * Dipanggil tombol bahasa di footer sidebar. Tanpa endpoint ini pilihan
+     * bahasa hanya hidup di localStorage dan hilang begitu pengguna berganti
+     * perangkat atau membersihkan data peramban.
+     *
+     * Kolom `language` ikut tervalidasi di User::getRules(), jadi nilai yang
+     * tidak punya folder terjemahan di resources/lang sudah ditolak di sini.
+     */
+    public function updateLanguage(UpdateAccountLanguageRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $language = $request->validated('language');
+
+        if ($user->language !== $language) {
+            $this->updateService->handle($user, ['language' => $language]);
+
+            Activity::event('user:account.language-changed')
+                ->property(['old' => $user->language, 'new' => $language])
                 ->log();
         }
 

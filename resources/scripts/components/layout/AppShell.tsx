@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useStoreState } from 'easy-peasy';
 import classNames from 'classnames';
-import { ApplicationStore, store } from '@/state';import SearchContainer from '@/components/dashboard/search/SearchContainer';
+import { ApplicationStore, store } from '@/state';
+import SearchContainer from '@/components/dashboard/search/SearchContainer';
 import MaterialIcon from '@/components/elements/MaterialIcon';
 import tw from 'twin.macro';
 import styled from 'styled-components/macro';
@@ -11,6 +12,14 @@ import SpinnerOverlay from '@/components/elements/SpinnerOverlay';
 import useEventListener from '@/plugins/useEventListener';
 import { breakpoint } from '@/theme';
 import i18n from '@/i18n';
+import updateAccountLanguage from '@/api/account/updateAccountLanguage';
+import {
+    applyTheme,
+    getStoredLanguage,
+    getStoredTheme,
+    setStoredLanguage,
+    ThemeName,
+} from '@/appearance';
 
 interface Props {
     /** Tab kontekstual (mis. daftar halaman /account atau /server/:id) yang tampil di dalam sidebar. */
@@ -73,14 +82,18 @@ const NavRow = styled.div`
 /*
  * Kode bahasa: dua huruf kecil, sama dengan format kolom `language` di tabel users
  * (lihat App\Models\User::getAvailableLanguages()).
+ *
+ * `label` sengaja dipisah dari `code`: dua huruf pertama itu kode ISO-639-1
+ * untuk mesin, dua huruf terakhir yang tampil di tombol. Bentuknya mengikuti
+ * mockup brief-5 ("ID ID" / "GB EN").
  */
 const LANGUAGES: { code: string; label: string }[] = [
     { code: 'id', label: 'ID ID' },
     { code: 'en', label: 'GB EN' },
 ];
 
-const THEME_STORAGE_KEY = 'z0ne.theme';
-const LANGUAGE_STORAGE_KEY = 'z0ne.language';
+/* Judul kolom mana pun untuk pembaca layar; mockup cuma menampilkan dua huruf. */
+const LANGUAGE_NAMES: Record<string, string> = { id: 'Indonesia', en: 'English' };
 
 /**
  * Top header cluster (PRD: "header cluster node (SG-01)").
@@ -148,7 +161,6 @@ const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
     const rootAdmin = useStoreState((state: ApplicationStore) => state.user.data!.rootAdmin);
     const username = useStoreState((state: ApplicationStore) => state.user.data!.username);
     const accountLanguage = useStoreState((state: ApplicationStore) => state.user.data!.language);
-    const updateUserData = useStoreState((state: ApplicationStore) => state.user.updateUserData);
 
     const { pathname } = useLocation();
     const [open, setOpen] = useState(false);
@@ -161,10 +173,9 @@ const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
      * supaya kelas `light` sudah terpasang sebelum paint pertama dan layar tidak
      * berkedip gelap lalu berubah terang.
      */
-    const [light, setLight] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) === 'light');
-    const [language, setLanguage] = useState(
-        () => localStorage.getItem(LANGUAGE_STORAGE_KEY) || accountLanguage || 'en'
-    );
+    const [theme, setTheme] = useState<ThemeName>(getStoredTheme);
+    const [language, setLanguage] = useState(() => getStoredLanguage() || accountLanguage || 'en');
+    const [savingLanguage, setSavingLanguage] = useState(false);
 
     // Tiap grup bisa dilipat sendiri-sendiri; semuanya terbuka seperti mockup.
     const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -183,36 +194,49 @@ const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
     };
 
     /*
-     * Kelas `light`/`dark` dipasang di <html>. Pasangan warnanya ada di
-     * GlobalStylesheet (blok `html.light`), bukan di sini — supaya seluruh panel
-     * ikut berubah, bukan cuma sidebar.
+     * Kelas `light`/`dark` dipasang di <html> lewat applyTheme(). Pasangan
+     * warnanya ada di GlobalStylesheet (blok `html.light`), bukan di sini —
+     * supaya seluruh panel ikut berubah, bukan cuma sidebar.
      */
     useEffect(() => {
-        const root = document.documentElement;
-
-        root.classList.toggle('light', light);
-        root.classList.toggle('dark', !light);
-        localStorage.setItem(THEME_STORAGE_KEY, light ? 'light' : 'dark');
-    }, [light]);
+        applyTheme(theme);
+    }, [theme]);
 
     /*
      * Ganti bahasa.
      *
-     * `i18n.changeLanguage()` benar-benar mengganti bahasa antarmuka, tetapi baru
-     * terlihat kalau folder terjemahannya ada: panel ini cuma punya
-     * `resources/lang/en`, jadi kode yang belum punya folder akan jatuh ke `en`
-     * (perilaku bawaan i18next). Pilihannya tetap disimpan supaya ikut terbawa
-     * begitu terjemahan barunya ditambahkan.
+     * Tiga hal terjadi sekaligus supaya pilihan benar-benar "menempel":
      *
-     * Tidak ada endpoint API untuk menyimpan bahasa akun (routes/api-client.php
-     * hanya punya PUT /email dan /password), jadi pilihan ini belum tersimpan ke
-     * kolom `language` di tabel users.
+     *  1. `i18n.changeLanguage()` mengganti antarmuka saat itu juga.
+     *  2. localStorage menyimpan pilihan agar bertahan setelah muat ulang
+     *     (dibaca lagi oleh i18n.ts dan App.tsx).
+     *  3. PUT /api/client/account/language menyimpan ke kolom `language` tabel
+     *     users, sehingga pilihan ikut terbawa ke perangkat lain.
+     *
+     * Langkah 3 tidak memblokir antarmuka: bahasa sudah berganti sebelum
+     * permintaan jaringan selesai. Kalau gagal (mis. sesi kedaluwarsa), pilihan
+     * lokal tetap berlaku dan store dilepas balik ke nilai server supaya
+     * tampilan tidak berbohong soal apa yang tersimpan.
      */
     const changeLanguage = (code: string) => {
+        if (code === language) {
+            return;
+        }
+
         setLanguage(code);
-        localStorage.setItem(LANGUAGE_STORAGE_KEY, code);
+        setStoredLanguage(code);
         i18n.changeLanguage(code);
         store.getActions().user.updateUserData({ language: code });
+
+        setSavingLanguage(true);
+        updateAccountLanguage(code)
+            .catch(() => {
+                setLanguage(accountLanguage || 'en');
+                setStoredLanguage(accountLanguage || 'en');
+                i18n.changeLanguage(accountLanguage || 'en');
+                store.getActions().user.updateUserData({ language: accountLanguage });
+            })
+            .finally(() => setSavingLanguage(false));
     };
 
     // Navigasi dari dalam drawer harus menutup drawer-nya, kalau tidak overlay
@@ -413,44 +437,62 @@ const AppShell: React.FC<Props> = ({ subNavigation, node, children }) => {
                             <div
                                 role={'group'}
                                 aria-label={'Pilih bahasa'}
-                                css={tw`flex items-center bg-surface-container-high rounded-lg p-0.5 gap-0.5`}
+                                aria-busy={savingLanguage}
+                                css={tw`flex items-center gap-1 p-0.5 rounded-lg bg-surface-container-high border border-strong`}
                             >
-                                {LANGUAGES.map((item) => (
-                                    <button
-                                        key={item.code}
-                                        type={'button'}
-                                        onClick={() => changeLanguage(item.code)}
-                                        aria-pressed={language === item.code}
-                                        css={classNames(
-                                            'px-2 py-0.5 rounded text-[11px]',
-                                            language === item.code
-                                                ? 'font-bold bg-text-primary text-surface-base shadow-sm'
-                                                : 'font-medium text-text-muted hover:text-text-primary'
-                                        )}
-                                    >
-                                        {item.label}
-                                    </button>
-                                ))}
+                                {LANGUAGES.map((item) => {
+                                    const active = language === item.code;
+
+                                    return (
+                                        <button
+                                            key={item.code}
+                                            type={'button'}
+                                            onClick={() => changeLanguage(item.code)}
+                                            aria-pressed={active}
+                                            title={LANGUAGE_NAMES[item.code]}
+                                            className={classNames(
+                                                'px-2.5 py-1 rounded-md text-[11px] leading-none tracking-wide transition-colors',
+                                                'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand',
+                                                active
+                                                    ? 'bg-brand text-on-primary font-bold shadow-sm'
+                                                    : 'font-medium text-text-muted hover:text-text-primary hover:bg-surface-hover'
+                                            )}
+                                        >
+                                            {item.label}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 
                         <div css={tw`flex items-center justify-between`}>
                             <span css={tw`font-label-sm text-label-sm text-text-muted`}>Tampilan</span>
                             <div css={tw`flex items-center gap-2`}>
-                                <span css={tw`font-label-sm text-label-sm text-text-secondary font-medium`}>
-                                    {light ? 'Light' : 'Dark'}
+                                <span
+                                    css={
+                                        theme === 'light'
+                                            ? tw`font-label-sm text-label-sm text-text-primary font-semibold`
+                                            : tw`font-label-sm text-label-sm text-text-secondary font-medium`
+                                    }
+                                >
+                                    {theme === 'light' ? 'Light' : 'Dark'}
                                 </span>
-                                <label css={tw`relative inline-flex cursor-pointer items-center`}>
+                                <label css={tw`relative inline-flex items-center cursor-pointer`}>
                                     <input
                                         type={'checkbox'}
                                         className={'peer sr-only'}
-                                        checked={light}
-                                        onChange={(e) => setLight(e.target.checked)}
+                                        checked={theme === 'light'}
+                                        onChange={(e) => setTheme(e.target.checked ? 'light' : 'dark')}
                                         aria-label={'Aktifkan mode terang'}
                                     />
+                                    {/*
+                                     * Gagangnya memakai after: (bukan <span> terpisah) supaya
+                                     * tidak ikut terbaca pembaca layar dan agar posisinya
+                                     * benar-benar digerakkan peer-checked dari checkbox.
+                                     */}
                                     <div
                                         aria-hidden={'true'}
-                                        css={tw`relative h-5 w-9 rounded-full bg-surface-container-highest transition-colors peer-checked:bg-cyan-600 after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:bg-text-primary after:transition-all peer-checked:after:translate-x-4`}
+                                        css={tw`relative h-6 w-11 rounded-full border border-strong bg-surface-container-highest transition-colors peer-checked:bg-cyan-600 peer-focus-visible:ring-2 peer-focus-visible:ring-brand peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-surface-card after:absolute after:top-[3px] after:left-[3px] after:h-4 after:w-4 after:rounded-full after:bg-text-primary after:shadow-sm after:transition-transform peer-checked:after:translate-x-5`}
                                     />
                                 </label>
                             </div>
