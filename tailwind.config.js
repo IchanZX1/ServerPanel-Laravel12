@@ -3,42 +3,40 @@ const colors = require('tailwindcss/colors');
 /*
  * Warna yang bisa berpindah tema.
  *
- * Penting — kenapa TIDAK memakai `<alpha-value>`:
+ * Bentuknya `rgb(var(--nama))` — TANPA fallback dan TANPA `<alpha-value>`.
+ * Dua hal itu masing-masing mematahkan satu kompiler:
  *
- * Bentuk kanonik Tailwind untuk warna berbasis kanal adalah
- * `rgb(var(--x, R G B) / <alpha-value>)`, dan itu memang benar untuk kelas
- * utility (bg-neutral-900/90) karena Tailwind mengganti placeholder-nya saat
- * mengompilasi.
+ *  - Fallback (`var(--x, 20 41 62)`) berisi spasi, dan regex `parseColor`
+ *    Tailwind menolak spasi di dalam var() — akibatnya kelas ber-alpha
+ *    seperti `hover:bg-neutral-800/60` dianggap tidak ada dan `@apply`
+ *    gagal keras saat build.
+ *  - `<alpha-value>` tidak diganti oleh twin.macro (hanya Tailwind yang
+ *    menggantinya saat mengompilasi kelas). twin menuliskan placeholder itu
+ *    mentah ke CSS-in-JS, seluruh deklarasi warnanya jadi tidak valid dan
+ *    DIBUANG peramban — inilah penyebab bug "semua border transparan".
  *
- * Masalahnya twin.macro: ia membaca token ini langsung dan menuliskan
- * string-nya apa adanya ke CSS-in-JS, TANPA mengganti `<alpha-value>`
- * (bahkan pada pemakaian tanpa modifier alpha, seperti
- * tw`text-neutral-200`). Akibatnya seluruh deklarasi warna dari tw`` /
- * styled-components jadi tidak valid dan DIBUANG peramban — border dan latar
- * hilang, teks lenyap. Ini penyebab bug "semua border transparan".
- *
- * Tanpa `<alpha-value>`, nilai di bawah selalu CSS yang sah di kedua jalur.
- * Konsekuensinya: modifier alpha (`bg-neutral-900/90`) tidak lagi dihasilkan
- * Tailwind untuk token ini, jadi pemakaian seperti itu harus memakai token
- * solid — sudah dilakukan di komponen terkait.
+ * Nilai gelapnya pindah ke blok `:root` di GlobalStylesheet.ts, dan
+ * `html.light` menimpanya untuk mode terang. Tanpa var() yang terisi,
+ * warnanya jatuh ke `initial` — karena itu kedua blok itu wajib ada.
  */
-const tone = (name, channels) => `rgb(var(${name}, ${channels}))`;
+const tone = (name) => `rgb(var(${name}))`;
 
 /*
- * Ramp netral panel. Nilai kanalnya sama dengan hsl() lama
- * (hsl(210, 24%, 16%) = 20 41 62) — cuma ditulis sebagai kanal RGB.
+ * Ramp netral panel. Nilai kanalnya ada di `:root` GlobalStylesheet.ts —
+ * yang di sini hanya nama variabelnya. Nilai gelap sama dengan hsl() lama
+ * (hsl(210, 24%, 16%) = 20 41 62).
  */
 const neutral = {
-    50: tone('--app-neutral-50', '245 247 250'),
-    100: tone('--app-neutral-100', '229 232 235'),
-    200: tone('--app-neutral-200', '202 209 216'),
-    300: tone('--app-neutral-300', '154 165 177'),
-    400: tone('--app-neutral-400', '123 135 147'),
-    500: tone('--app-neutral-500', '96 109 123'),
-    600: tone('--app-neutral-600', '81 95 108'),
-    700: tone('--app-neutral-700', '63 77 90'),
-    800: tone('--app-neutral-800', '51 64 77'),
-    900: tone('--app-neutral-900', '20 41 62'),
+    50: tone('--app-neutral-50'),
+    100: tone('--app-neutral-100'),
+    200: tone('--app-neutral-200'),
+    300: tone('--app-neutral-300'),
+    400: tone('--app-neutral-400'),
+    500: tone('--app-neutral-500'),
+    600: tone('--app-neutral-600'),
+    700: tone('--app-neutral-700'),
+    800: tone('--app-neutral-800'),
+    900: tone('--app-neutral-900'),
 };
 
 const gray = neutral;
@@ -103,36 +101,33 @@ module.exports = {
                     container: '#06b6d4',
                 },
                 'on-primary': '#003640',
-                'on-surface': tone('--app-on-surface', '228 225 230'),
-                'on-surface-variant': tone('--app-on-surface-variant', '188 201 205'),
+                'on-surface': tone('--app-on-surface'),
+                'on-surface-variant': tone('--app-on-surface-variant'),
                 error: '#ffb4ab',
 
                 /*
                  * Permukaan. `surface-base` = background halaman, `-card` = kartu,
                  * `-header` = bar header/modal, `container-*` = blok bersarang.
                  *
-                 * Nilainya dibungkus var() dengan fallback gelap. Alasannya:
-                 * tombol tema di sidebar (brief-5) mengganti kelas `light` di
-                 * <html>, dan blok `html.light` di GlobalStylesheet.ts menimpa
-                 * variabel-variabel ini supaya SELURUH panel berubah — bukan
-                 * cuma sidebar. Kalau variabelnya kosong (mis. stylesheet belum
-                 * termuat), fallback-nya mengembalikan warna gelap semula,
-                 * jadi tidak ada regresi pada mode gelap.
+                 * Nilainya var() tanpa fallback; nilai gelapnya ada di `:root`
+                 * GlobalStylesheet.ts. Tombol tema di sidebar (brief-5)
+                 * mengganti kelas `light` di <html>, dan blok `html.light`
+                 * menimpa variabel-variabel ini supaya SELURUH panel berubah.
                  */
                 surface: {
-                    base: tone('--app-surface-base', '9 9 11'),
-                    muted: tone('--app-surface-muted', '19 19 22'),
-                    dim: tone('--app-surface-dim', '19 19 22'),
-                    strong: tone('--app-surface-strong', '23 23 27'),
-                    card: tone('--app-surface-card', '20 20 24'),
-                    header: tone('--app-surface-header', '28 28 34'),
-                    hover: tone('--app-surface-hover', '34 34 42'),
-                    active: tone('--app-surface-active', '42 42 53'),
-                    'container-lowest': tone('--app-surface-container-lowest', '14 14 17'),
-                    'container-low': tone('--app-surface-container-low', '27 27 30'),
-                    container: tone('--app-surface-container', '31 31 34'),
-                    'container-high': tone('--app-surface-container-high', '42 42 45'),
-                    'container-highest': tone('--app-surface-container-highest', '53 52 56'),
+                    base: tone('--app-surface-base'),
+                    muted: tone('--app-surface-muted'),
+                    dim: tone('--app-surface-dim'),
+                    strong: tone('--app-surface-strong'),
+                    card: tone('--app-surface-card'),
+                    header: tone('--app-surface-header'),
+                    hover: tone('--app-surface-hover'),
+                    active: tone('--app-surface-active'),
+                    'container-lowest': tone('--app-surface-container-lowest'),
+                    'container-low': tone('--app-surface-container-low'),
+                    container: tone('--app-surface-container'),
+                    'container-high': tone('--app-surface-container-high'),
+                    'container-highest': tone('--app-surface-container-highest'),
                 },
 
                 // Teks. Dipakai sebagai `text-text-primary` — brief menamai
@@ -140,10 +135,10 @@ module.exports = {
                 // warna `primary` (ramp blue) di atas. Sama seperti permukaan,
                 // nilainya bisa ditimpa mode terang.
                 text: {
-                    primary: tone('--app-text-primary', '250 250 250'),
-                    secondary: tone('--app-text-secondary', '161 161 170'),
-                    tertiary: tone('--app-text-tertiary', '228 228 231'),
-                    muted: tone('--app-text-muted', '113 113 122'),
+                    primary: tone('--app-text-primary'),
+                    secondary: tone('--app-text-secondary'),
+                    tertiary: tone('--app-text-tertiary'),
+                    muted: tone('--app-text-muted'),
                 },
 
                 // Status + varian latar transparannya.
@@ -161,9 +156,9 @@ module.exports = {
                  * (`bg-border-muted`) warna itu juga perlu terdaftar di sini.
                  */
                 border: {
-                    DEFAULT: tone('--app-border-default', '63 63 70'),
-                    muted: tone('--app-border-muted', '41 41 47'),
-                    strong: tone('--app-border-strong', '63 63 70'),
+                    DEFAULT: tone('--app-border-default'),
+                    muted: tone('--app-border-muted'),
+                    strong: tone('--app-border-strong'),
                 },
             },
             fontSize: {
@@ -219,23 +214,21 @@ module.exports = {
             },
             borderColor: theme => ({
                 /*
-                 * WAJIB hex konkret, bukan theme('colors.neutral.400').
+                 * Hex konkret (123 135 147 = neutral-400 gelap), bukan
+                 * theme('colors.neutral.400').
                  *
-                 * Sejak ramp neutral jadi `rgb(var(--app-neutral-400) / <alpha-value>)`,
-                 * pembacaan token lewat helper theme() TIDAK ikut mengganti
-                 * <alpha-value> (hanya utility Tailwind terkompilasi yang
-                 * diganti). Nilai mentah itu bocor ke preflight Tailwind
+                 * Token neutral kini berupa FUNGSI (lihat tone() di atas),
+                 * dan helper theme() mengembalikannya apa adanya tanpa
+                 * memanggil — nilai fungsi itu bocor ke preflight Tailwind
                  * (`*, ::before, ::after { border-color: ... }`) sehingga
-                 * SELURUH border di panel dianggap CSS tidak valid dan jatuh
-                 * ke transparan. Nilai di bawah = hsl(210, 24%, 16%) lama,
-                 * dibulatkan ke kanal RGB yang sama dengan --app-neutral-400.
+                 * SELURUH border dianggap tidak valid dan jatuh transparan.
                  */
-                default: 'rgb(123 135 147 / var(--tw-border-opacity, 1))',
+                default: '#7b8793',
                 // DESIGN.md — border.muted/strong. `border-strong` dipakai brief
                 // untuk tepi yang lebih tegas, `border-muted` untuk pemisah halus.
                 // Lewat var() juga, supaya garis pemisah ikut berubah di mode terang.
-                muted: tone('--app-border-muted', '41 41 47'),
-                strong: tone('--app-border-strong', '63 63 70'),
+                muted: tone('--app-border-muted'),
+                strong: tone('--app-border-strong'),
             }),
         },
     },

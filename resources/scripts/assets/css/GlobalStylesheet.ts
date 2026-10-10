@@ -88,36 +88,74 @@ export default createGlobalStyle`
     }
 
     /*
-     * brief-5 — mode terang.
+     * brief-5 — token warna & mode terang.
      *
-     * Token Tailwind (surface-*, text-*, border-*) dikompilasi jadi nilai gelap
-     * yang tetap, jadi agar tombol tema benar-benar mengubah SELURUH panel,
-     * nilainya dijadikan custom property di tailwind.config.js (mis. warna
-     * surface-card memakai var(--app-surface-card) dengan fallback gelap).
-     * Blok di bawah ini menimpa variabelnya; fallback di config membuat mode
-     * gelap tetap utuh meski stylesheet ini belum termuat.
+     * Token Tailwind (surface-*, text-*, border-*, neutral-*) dikompilasi jadi
+     * 'rgb(var(--app-*))' tanpa fallback — lihat catatan tone() di
+     * tailwind.config.js soal kenapa fallback dan 'alpha-value' tidak bisa
+     * dipakai. Karena itu NILAI GELAPNYA WAJIB ada di sini; kalau blok ini
+     * hilang, setiap warna token jadi tidak terisi dan panel tampak transparan.
      *
      * Kelas light dipasang di elemen <html> oleh AppShell.tsx, dan SEKALI LAGI
      * oleh skrip inline di wrapper.blade.php supaya tema yang dipilih tidak
      * berkedip gelap saat halaman dimuat ulang.
      *
-     * Hanya token brief yang punya padanan terang. Palet lama (neutral-*,
-     * primary-* blue ramp) sengaja tidak disentuh supaya layar di luar scope
-     * tidak berubah warna.
-     *
-     * Ditulis sebagai satu selector utuh (html.light), bukan bersarang
+     * Ditulis sebagai selector utuh (html.light), bukan bersarang
      * (html { &.light { ... } }): styled-components TIDAK meratakan tanda &
      * di dalam createGlobalStyle, sehingga bentuk bersarang ikut terkirim apa
      * adanya sebagai "html{&.light{...}" dan seluruh aturan itu diabaikan
      * peramban — inilah yang dulu membuat tombol tema terlihat tidak bekerja.
-     */
-    /*
+     *
      * color-scheme memberitahu peramban widget bawaan (dropdown select,
      * date/time picker, autofill, scrollbar) mengikuti tema aktif. Tanpa ini
      * select di mode terang membuka popup gelap khas Chrome.
      */
     :root {
         color-scheme: dark;
+
+        /* Permukaan — nilai mode gelap (nilai lama, pertahankan). */
+        --app-surface-base: 9 9 11;
+        --app-surface-muted: 19 19 22;
+        --app-surface-dim: 19 19 22;
+        --app-surface-strong: 23 23 27;
+        --app-surface-card: 20 20 24;
+        --app-surface-header: 28 28 34;
+        --app-surface-hover: 34 34 42;
+        --app-surface-active: 42 42 53;
+        --app-surface-container-lowest: 14 14 17;
+        --app-surface-container-low: 27 27 30;
+        --app-surface-container: 31 31 34;
+        --app-surface-container-high: 42 42 45;
+        --app-surface-container-highest: 53 52 56;
+
+        /* Teks. */
+        --app-text-primary: 250 250 250;
+        --app-text-secondary: 161 161 170;
+        --app-text-tertiary: 228 228 231;
+        --app-text-muted: 113 113 122;
+
+        --app-on-surface: 228 225 230;
+        --app-on-surface-variant: 188 201 205;
+
+        /* Border. */
+        --app-border-default: 63 63 70;
+        --app-border-muted: 41 41 47;
+        --app-border-strong: 63 63 70;
+
+        /*
+         * Ramp netral panel (dipakai di banyak layar selain keempat brief).
+         * Nilai kanalnya sama dengan hsl() lama — 900 = hsl(210, 24%, 16%).
+         */
+        --app-neutral-50: 245 247 250;
+        --app-neutral-100: 229 232 235;
+        --app-neutral-200: 202 209 216;
+        --app-neutral-300: 154 165 177;
+        --app-neutral-400: 123 135 147;
+        --app-neutral-500: 96 109 123;
+        --app-neutral-600: 81 95 108;
+        --app-neutral-700: 63 77 90;
+        --app-neutral-800: 51 64 77;
+        --app-neutral-900: 20 41 62;
     }
 
     html.light {

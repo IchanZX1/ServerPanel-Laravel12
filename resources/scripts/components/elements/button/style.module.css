@@ -12,8 +12,14 @@
         @apply px-6 py-3 text-base;
     }
 
+    /*
+     * Warna netral di sini TIDAK boleh pakai modifier alpha (`/60`). Token
+     * netral kini `rgb(var(--app-neutral-800))`; Tailwind tidak bisa
+     * menurunkan kanal alpha dari nilai var() dan `@apply`-nya gagal keras
+     * saat build ("class does not exist"). Pakai token permukaan solid.
+     */
     &.secondary {
-        @apply text-neutral-200 bg-transparent hover:bg-neutral-800/60;
+        @apply text-text-secondary bg-transparent hover:bg-surface-hover;
 
         &:disabled {
             background: transparent !important;
@@ -47,15 +53,15 @@
 }
 
 .text {
-    @apply bg-neutral-800 text-neutral-200 border border-neutral-700/60 shadow-sm;
-    @apply hover:bg-neutral-700/80 hover:text-white active:bg-neutral-800 focus:ring-neutral-500/60;
+    @apply bg-surface-container text-text-primary border border-strong shadow-sm;
+    @apply hover:bg-surface-hover hover:text-text-primary active:bg-surface-container focus:ring-brand;
 
     &.secondary {
-        @apply hover:bg-neutral-700 active:bg-neutral-800;
+        @apply hover:bg-surface-hover active:bg-surface-container;
     }
 
     &:disabled {
-        @apply bg-neutral-800/40 text-neutral-400/50 border-transparent;
+        @apply bg-surface-container text-text-muted border-transparent;
     }
 }
 
